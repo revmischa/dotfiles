@@ -1,0 +1,20 @@
+# Chezmoi configuration
+# Documentation: https://www.chezmoi.io/reference/configuration-file/
+
+[data]
+    # Personal information
+    name = "Mischa Spiegelmock"
+    email = "me@mish.dev"
+
+    # Detect OS and environment
+    isLinux = {{ eq .chezmoi.os "linux" }}
+    isMacOS = {{ eq .chezmoi.os "darwin" }}
+    isDevContainer = {{ env "REMOTE_CONTAINERS" | not | not }}
+
+[edit]
+    command = "code"
+    args = ["--wait"]
+
+[diff]
+    command = "code"
+    args = ["--wait", "--diff"]

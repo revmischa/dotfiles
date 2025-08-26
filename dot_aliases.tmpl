@@ -1,0 +1,179 @@
+# Shell aliases for productivity
+
+# Basic commands
+alias l="ls -la"
+alias ll="ls -l"
+alias la="ls -la"
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+# Modern replacements (if available)
+command -v bat >/dev/null && alias cat="bat"
+command -v exa >/dev/null && alias ls="exa"
+command -v fd >/dev/null && alias find="fd"
+command -v rg >/dev/null && alias grep="rg"
+command -v btm >/dev/null && alias top="btm"
+command -v nvim >/dev/null && alias vim="nvim" && alias vi="nvim"
+
+# Git aliases
+alias g="git"
+alias gst="git status"
+alias gco="git checkout"
+alias gcb="git checkout -b"
+alias gp="git pull"
+alias gps="git push"
+alias gaa="git add ."
+alias gc="git commit"
+alias gcm="git commit -m"
+alias gca="git commit --amend"
+alias gl="git log --oneline --graph --decorate"
+alias gd="git diff"
+alias gdc="git diff --cached"
+alias gb="git branch"
+alias gbd="git branch -d"
+alias gm="git merge"
+alias gr="git rebase"
+alias gri="git rebase -i"
+alias gs="git stash"
+alias gsp="git stash pop"
+alias gsl="git stash list"
+
+# Docker
+alias dk="docker"
+alias dkc="docker compose"
+alias dkps="docker ps"
+alias dki="docker images"
+alias dkrm="docker rm"
+alias dkrmi="docker rmi"
+alias dke="docker exec -it"
+alias dkl="docker logs"
+alias dkb="docker build"
+
+# Kubernetes
+alias k="kubectl"
+alias kgp="kubectl get pods"
+alias kgs="kubectl get services"
+alias kgd="kubectl get deployments"
+alias kdp="kubectl describe pod"
+alias kds="kubectl describe service"
+alias kdd="kubectl describe deployment"
+alias kl="kubectl logs"
+alias ke="kubectl exec -it"
+
+# Package managers
+{{- if .isMacOS }}
+alias br="brew"
+alias bri="brew install"
+alias brs="brew search"
+alias bru="brew update"
+alias brug="brew upgrade"
+alias brc="brew cleanup"
+{{- end }}
+
+{{- if .isLinux }}
+alias apt-update="sudo apt update"
+alias apt-upgrade="sudo apt upgrade"
+alias apt-install="sudo apt install"
+alias apt-search="apt search"
+alias apt-remove="sudo apt remove"
+{{- end }}
+
+# Node.js and npm
+alias n="npm"
+alias ni="npm install"
+alias nid="npm install --save-dev"
+alias nis="npm install --save"
+alias nr="npm run"
+alias ns="npm start"
+alias nt="npm test"
+alias nb="npm run build"
+alias nc="npm run clean"
+
+# Python
+alias py="python3"
+alias pip="pip3"
+alias venv="python3 -m venv"
+alias activate="source venv/bin/activate"
+
+# Poetry
+alias po="poetry"
+alias poi="poetry install"
+alias pon="poetry new"
+alias pos="poetry shell"
+alias por="poetry run"
+alias poa="poetry add"
+alias pod="poetry add --group dev"
+
+# Rust
+alias ca="cargo"
+alias cab="cargo build"
+alias car="cargo run"
+alias cat="cargo test"
+alias cac="cargo check"
+alias caf="cargo fmt"
+alias cal="cargo clippy"
+
+# Go
+alias gob="go build"
+alias gor="go run"
+alias got="go test"
+alias gom="go mod"
+alias gog="go get"
+
+# Development
+alias serve="python3 -m http.server 8000"
+alias myip="curl -s ifconfig.me"
+alias weather="curl -s wttr.in"
+alias speedtest="curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python -"
+
+# System utilities
+alias ports="lsof -i -P -n | grep LISTEN"
+alias diskusage="df -h"
+alias meminfo="free -h"
+alias cpuinfo="lscpu"
+
+# Text editing
+alias v="nvim"
+alias n="nvim"
+command -v nvim >/dev/null || alias v="$EDITOR"
+
+# Networking
+alias ping="ping -c 5"
+alias wget="wget -c"
+
+# Archive utilities
+alias tarc="tar -czf"
+alias tarx="tar -xzf"
+alias unzip="unzip -q"
+
+# Quick navigation
+alias projects="cd ~/Projects"
+alias downloads="cd ~/Downloads"
+alias documents="cd ~/Documents"
+alias desktop="cd ~/Desktop"
+
+# Process management
+alias psg="ps aux | grep"
+alias killall="killall -v"
+
+# File operations
+alias cp="cp -i"
+alias mv="mv -i"
+alias rm="rm -i"
+alias mkdir="mkdir -p"
+
+# Reload shell
+alias reload="source ~/.zshrc"
+
+# Show/hide hidden files in Finder (macOS)
+{{- if .isMacOS }}
+alias showfiles="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
+alias hidefiles="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+{{- end }}
+
+# Quick edits
+alias zshconfig="chezmoi edit ~/.zshrc"
+alias gitconfig="chezmoi edit ~/.gitconfig"
+alias aliasconfig="chezmoi edit ~/.aliases"

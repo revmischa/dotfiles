@@ -1,0 +1,60 @@
+# Git configuration
+[user]
+    name = {{ .name | quote }}
+    email = {{ .email | quote }}
+
+[core]
+    excludesfile = ~/.gitignore_global
+    editor = code --wait
+
+[init]
+    defaultBranch = main
+
+[push]
+    default = current
+    autoSetupRemote = true
+
+[pull]
+    rebase = true
+
+[merge]
+    ff = false
+
+[alias]
+    # Status and basic commands
+    st = status
+    ci = commit
+    co = checkout
+    br = branch
+
+    # Logs and history
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+
+    # Diffs
+    di = diff
+    dc = diff --cached
+
+    # Push/pull
+    pom = pull origin main
+    pso = push --set-upstream origin
+
+    # Utilities
+    up = !git pull --rebase --prune && git log --pretty=format:\"%Cred%ae %Creset- %C(yellow)%s %Creset(%ar)\" HEAD@{1}..
+    wipe = !git reset --hard && git clean -fd
+    uncommit = reset --soft HEAD~1
+
+[color]
+    ui = auto
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = green
+    changed = yellow
+    untracked = red
