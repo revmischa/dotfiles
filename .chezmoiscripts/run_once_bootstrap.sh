@@ -298,7 +298,7 @@ set_zsh_default() {
 # Main installation
 main() {
     log_info "Starting dotfiles bootstrap..."
-    
+
     # Check environment
     if is_container; then
         log_info "Container environment detected"
