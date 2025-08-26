@@ -47,11 +47,25 @@ command_exists() {
 
 # Safe sudo - use sudo if available, otherwise run directly (for containers)
 safe_sudo() {
-    if command_exists sudo; then
+    if command_exists sudo && sudo -n true 2>/dev/null; then
+        # sudo is available and can run without password
+        sudo "$@"
+    elif [[ $EUID -eq 0 ]]; then
+        # Running as root, no sudo needed
+        "$@"
+    elif command_exists sudo; then
+        # sudo is available but may need password
         sudo "$@"
     else
+        # No sudo available, try to run directly (might fail)
+        log_warning "No sudo available, trying to run directly: $*"
         "$@"
     fi
+}
+
+# Check if we're in a devcontainer or similar environment
+is_container() {
+    [[ -n "$REMOTE_CONTAINERS" ]] || [[ -n "$CODESPACES" ]] || [[ -f "/.dockerenv" ]] || [[ -n "$DEVCONTAINER" ]]
 }
 
 # Install package manager
@@ -72,17 +86,21 @@ install_package_manager() {
             log_info "Homebrew already installed"
         fi
     elif [[ "$OS" == "linux" ]]; then
-        # Update package lists
+        # Update package lists only if we have permission
         if command_exists apt-get; then
             log_info "Updating apt packages..."
-            safe_sudo apt-get update -y
+            if ! safe_sudo apt-get update -y; then
+                log_warning "Failed to update apt packages. Continuing anyway..."
+            fi
         elif command_exists yum; then
             log_info "Updating yum packages..."
-            safe_sudo yum update -y
+            if ! safe_sudo yum update -y; then
+                log_warning "Failed to update yum packages. Continuing anyway..."
+            fi
         fi
 
-        # Install Linuxbrew if not in a container
-        if [[ ! "$REMOTE_CONTAINERS" ]] && ! command_exists brew; then
+        # Install Linuxbrew if not in a container and not already installed
+        if ! is_container && ! command_exists brew; then
             log_info "Installing Linuxbrew..."
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
@@ -91,6 +109,8 @@ install_package_manager() {
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
             log_success "Linuxbrew installed"
+        elif is_container; then
+            log_info "In container environment, skipping Linuxbrew installation"
         fi
     fi
 }
@@ -140,11 +160,13 @@ install_essentials() {
             )
 
             for package in "${packages[@]}"; do
-                if dpkg -l | grep -q "^ii  $package "; then
+                if dpkg -l | grep -q "^ii  $package " 2>/dev/null; then
                     log_info "$package already installed"
                 else
                     log_info "Installing $package..."
-                    safe_sudo apt-get install -y "$package"
+                    if ! safe_sudo apt-get install -y "$package"; then
+                        log_warning "Failed to install $package. You may need to install it manually."
+                    fi
                 fi
             done
         fi
@@ -257,12 +279,17 @@ set_zsh_default() {
 
         # Add zsh to allowed shells if not present
         if ! grep -q "$(which zsh)" /etc/shells 2>/dev/null; then
-            echo "$(which zsh)" | safe_sudo tee -a /etc/shells
+            if ! echo "$(which zsh)" | safe_sudo tee -a /etc/shells >/dev/null 2>&1; then
+                log_warning "Could not update /etc/shells. You may need to do this manually."
+            fi
         fi
 
         # Change default shell
-        chsh -s "$(which zsh)"
-        log_success "Zsh set as default shell (restart terminal to take effect)"
+        if ! chsh -s "$(which zsh)" 2>/dev/null; then
+            log_warning "Could not change default shell. You may need to run: chsh -s $(which zsh)"
+        else
+            log_success "Zsh set as default shell (restart terminal to take effect)"
+        fi
     else
         log_info "Zsh is already the default shell"
     fi
@@ -271,6 +298,15 @@ set_zsh_default() {
 # Main installation
 main() {
     log_info "Starting dotfiles bootstrap..."
+    
+    # Check environment
+    if is_container; then
+        log_info "Container environment detected"
+        if [[ $EUID -ne 0 ]] && ! command_exists sudo; then
+            log_warning "Running as non-root user without sudo in container"
+            log_warning "Some package installations may fail - consider running as root or with sudo"
+        fi
+    fi
 
     install_package_manager
     install_essentials
