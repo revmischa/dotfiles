@@ -68,6 +68,17 @@ is_container() {
     [[ -n "$REMOTE_CONTAINERS" ]] || [[ -n "$CODESPACES" ]] || [[ -f "/.dockerenv" ]] || [[ -n "$DEVCONTAINER" ]]
 }
 
+# Check if we can install packages system-wide
+can_install_packages() {
+    if [[ $EUID -eq 0 ]]; then
+        return 0
+    elif command_exists sudo && sudo -n true 2>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Install package manager
 install_package_manager() {
     if [[ "$OS" == "macos" ]]; then
@@ -86,16 +97,22 @@ install_package_manager() {
             log_info "Homebrew already installed"
         fi
     elif [[ "$OS" == "linux" ]]; then
-        # Update package lists only if we have permission
-        if command_exists apt-get; then
-            log_info "Updating apt packages..."
-            if ! safe_sudo apt-get update -y; then
-                log_warning "Failed to update apt packages. Continuing anyway..."
-            fi
-        elif command_exists yum; then
-            log_info "Updating yum packages..."
-            if ! safe_sudo yum update -y; then
-                log_warning "Failed to update yum packages. Continuing anyway..."
+        # Skip system package installation if we don't have permissions
+        if ! can_install_packages; then
+            log_warning "Cannot install system packages without root/sudo access"
+            log_info "Skipping system package installation - assuming they're already available"
+        else
+            # Update package lists only if we have permission
+            if command_exists apt-get; then
+                log_info "Updating apt packages..."
+                if ! safe_sudo apt-get update -y; then
+                    log_warning "Failed to update apt packages. Continuing anyway..."
+                fi
+            elif command_exists yum; then
+                log_info "Updating yum packages..."
+                if ! safe_sudo yum update -y; then
+                    log_warning "Failed to update yum packages. Continuing anyway..."
+                fi
             fi
         fi
 
@@ -148,7 +165,7 @@ install_essentials() {
 
     elif [[ "$OS" == "linux" ]]; then
         # Linux packages via system package manager
-        if command_exists apt-get; then
+        if can_install_packages && command_exists apt-get; then
             local packages=(
                 "git"
                 "curl"
@@ -167,6 +184,17 @@ install_essentials() {
                     if ! safe_sudo apt-get install -y "$package"; then
                         log_warning "Failed to install $package. You may need to install it manually."
                     fi
+                fi
+            done
+        elif ! can_install_packages; then
+            log_info "Cannot install system packages - assuming essential tools are available"
+            # Check if essential tools are available
+            local essential=("git" "curl" "wget" "zsh")
+            for tool in "${essential[@]}"; do
+                if command_exists "$tool"; then
+                    log_info "$tool is available"
+                else
+                    log_warning "$tool is not available - some features may not work"
                 fi
             done
         fi
@@ -197,7 +225,18 @@ install_essentials() {
             # Manual installation of starship
             if ! command_exists starship; then
                 log_info "Installing Starship manually..."
-                curl -sS https://starship.rs/install.sh | sh -s -- --yes
+                # Create local bin directory
+                mkdir -p "$HOME/.local/bin"
+                
+                # Install starship to user directory
+                if can_install_packages; then
+                    curl -sS https://starship.rs/install.sh | sh -s -- --yes
+                else
+                    log_info "Installing Starship to user directory..."
+                    curl -sS https://starship.rs/install.sh | sh -s -- --bin-dir="$HOME/.local/bin" --yes
+                    # Ensure .local/bin is in PATH
+                    export PATH="$HOME/.local/bin:$PATH"
+                fi
                 log_success "Starship installed"
             fi
         fi
@@ -298,13 +337,14 @@ set_zsh_default() {
 # Main installation
 main() {
     log_info "Starting dotfiles bootstrap..."
-
+    
     # Check environment
     if is_container; then
         log_info "Container environment detected"
-        if [[ $EUID -ne 0 ]] && ! command_exists sudo; then
-            log_warning "Running as non-root user without sudo in container"
-            log_warning "Some package installations may fail - consider running as root or with sudo"
+        if ! can_install_packages; then
+            log_warning "Running without root/sudo access in container"
+            log_info "Will install user-level tools only"
+            log_info "System packages (git, curl, zsh, neovim) should be pre-installed in your container"
         fi
     fi
 
@@ -316,8 +356,9 @@ main() {
     set_zsh_default
 
     log_success "Bootstrap completed successfully!"
+    if ! can_install_packages && is_container; then
+        log_info "Note: Some system packages may need to be installed manually or added to your devcontainer configuration"
+    fi
     log_info "Please restart your terminal or run: source ~/.zshrc"
-}
-
-# Run main function
+}# Run main function
 main "$@"
