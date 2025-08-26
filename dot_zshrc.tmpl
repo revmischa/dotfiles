@@ -1,9 +1,4 @@
 # Zsh configuration managed by chezmoi
-# Path to oh-my-zsh installation
-export ZSH="$HOME/.oh-my-zsh"
-
-# Set name of the theme to load
-ZSH_THEME=""  # We use Starship instead
 
 # History configuration
 HISTFILE=~/.zsh_history
@@ -32,24 +27,23 @@ compinit
 # Case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
-# Oh-My-Zsh plugins
-plugins=(
-    git
-    docker
-    kubectl
-    npm
-    yarn
-    pip
-    poetry
-    rust
-    golang
-    aws
-    zsh-autosuggestions
-    zsh-syntax-highlighting
-)
+# Load Zsh plugins (without Oh My Zsh)
+# zsh-autosuggestions
+[[ -f "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
-# Load Oh-My-Zsh if it exists
-[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+# zsh-syntax-highlighting (must be loaded last)
+[[ -f "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+# zsh-history-substring-search
+[[ -f "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh" ]] && source "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh"
+
+# Key bindings for history substring search
+if [[ -n "${key[Up]}" ]]; then
+    bindkey "${key[Up]}" history-substring-search-up
+fi
+if [[ -n "${key[Down]}" ]]; then
+    bindkey "${key[Down]}" history-substring-search-down
+fi
 
 # Load aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
