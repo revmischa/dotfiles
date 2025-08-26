@@ -45,6 +45,15 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Safe sudo - use sudo if available, otherwise run directly (for containers)
+safe_sudo() {
+    if command_exists sudo; then
+        sudo "$@"
+    else
+        "$@"
+    fi
+}
+
 # Install package manager
 install_package_manager() {
     if [[ "$OS" == "macos" ]]; then
@@ -66,10 +75,10 @@ install_package_manager() {
         # Update package lists
         if command_exists apt-get; then
             log_info "Updating apt packages..."
-            sudo apt-get update -y
+            safe_sudo apt-get update -y
         elif command_exists yum; then
             log_info "Updating yum packages..."
-            sudo yum update -y
+            safe_sudo yum update -y
         fi
 
         # Install Linuxbrew if not in a container
@@ -135,7 +144,7 @@ install_essentials() {
                     log_info "$package already installed"
                 else
                     log_info "Installing $package..."
-                    sudo apt-get install -y "$package"
+                    safe_sudo apt-get install -y "$package"
                 fi
             done
         fi
@@ -247,8 +256,8 @@ set_zsh_default() {
         log_info "Setting Zsh as default shell..."
 
         # Add zsh to allowed shells if not present
-        if ! grep -q "$(which zsh)" /etc/shells; then
-            echo "$(which zsh)" | sudo tee -a /etc/shells
+        if ! grep -q "$(which zsh)" /etc/shells 2>/dev/null; then
+            echo "$(which zsh)" | safe_sudo tee -a /etc/shells
         fi
 
         # Change default shell
