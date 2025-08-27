@@ -48,6 +48,9 @@ fi
 # Load aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
 
+# Load git aliases
+[[ -f "$HOME/.config/gitaliases.zsh" ]] && source "$HOME/.config/gitaliases.zsh"
+
 # Load local configuration
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
 
