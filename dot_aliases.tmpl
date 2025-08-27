@@ -11,7 +11,7 @@ alias .....="cd ../../../.."
 
 # Modern replacements (if available)
 command -v bat >/dev/null && alias cat="bat"
-command -v exa >/dev/null && alias ls="exa"
+command -v eza >/dev/null && alias ls="eza"
 command -v fd >/dev/null && alias find="fd"
 command -v rg >/dev/null && alias grep="rg"
 command -v btm >/dev/null && alias top="btm"
@@ -63,7 +63,7 @@ alias kl="kubectl logs"
 alias ke="kubectl exec -it"
 
 # Package managers
-{{- if .isMacOS }}
+{{- if eq .chezmoi.os "darwin" }}
 alias br="brew"
 alias bri="brew install"
 alias brs="brew search"
@@ -72,7 +72,7 @@ alias brug="brew upgrade"
 alias brc="brew cleanup"
 {{- end }}
 
-{{- if .isLinux }}
+{{- if eq .chezmoi.os "linux" }}
 alias apt-update="sudo apt update"
 alias apt-upgrade="sudo apt upgrade"
 alias apt-install="sudo apt install"
@@ -168,7 +168,7 @@ alias mkdir="mkdir -p"
 alias reload="source ~/.zshrc"
 
 # Show/hide hidden files in Finder (macOS)
-{{- if .isMacOS }}
+{{- if eq .chezmoi.os "darwin" }}
 alias showfiles="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
 alias hidefiles="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
 {{- end }}

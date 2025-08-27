@@ -116,19 +116,6 @@ install_package_manager() {
             fi
         fi
 
-        # Install Linuxbrew if not in a container and not already installed
-        if ! is_container && ! command_exists brew; then
-            log_info "Installing Linuxbrew..."
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-            # Add Linuxbrew to PATH
-            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zprofile
-            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-            log_success "Linuxbrew installed"
-        elif is_container; then
-            log_info "In container environment, skipping Linuxbrew installation"
-        fi
     fi
 }
 
@@ -149,7 +136,7 @@ install_essentials() {
             "ripgrep"
             "fd"
             "bat"
-            "exa"
+            "eza"
             "zoxide"
             "git-delta"
         )
@@ -199,46 +186,22 @@ install_essentials() {
             done
         fi
 
-        # Install modern tools via brew if available, otherwise manual install
-        if command_exists brew; then
-            local brew_packages=(
-                "neovim"
-                "starship"
-                "fzf"
-                "ripgrep"
-                "fd"
-                "bat"
-                "exa"
-                "zoxide"
-                "git-delta"
-            )
+        # Manual installation of modern tools
+        if ! command_exists starship; then
+            log_info "Installing Starship manually..."
+            # Create local bin directory
+            mkdir -p "$HOME/.local/bin"
 
-            for package in "${brew_packages[@]}"; do
-                if brew list "$package" >/dev/null 2>&1; then
-                    log_info "$package already installed"
-                else
-                    log_info "Installing $package..."
-                    brew install "$package"
-                fi
-            done
-        else
-            # Manual installation of starship
-            if ! command_exists starship; then
-                log_info "Installing Starship manually..."
-                # Create local bin directory
-                mkdir -p "$HOME/.local/bin"
-
-                # Install starship to user directory
-                if can_install_packages; then
-                    curl -sS https://starship.rs/install.sh | sh -s -- --yes
-                else
-                    log_info "Installing Starship to user directory..."
-                    curl -sS https://starship.rs/install.sh | sh -s -- --bin-dir="$HOME/.local/bin" --yes
-                    # Ensure .local/bin is in PATH
-                    export PATH="$HOME/.local/bin:$PATH"
-                fi
-                log_success "Starship installed"
+            # Install starship to user directory
+            if can_install_packages; then
+                curl -sS https://starship.rs/install.sh | sh -s -- --yes
+            else
+                log_info "Installing Starship to user directory..."
+                curl -sS https://starship.rs/install.sh | sh -s -- --bin-dir="$HOME/.local/bin" --yes
+                # Ensure .local/bin is in PATH
+                export PATH="$HOME/.local/bin:$PATH"
             fi
+            log_success "Starship installed"
         fi
     fi
 }
@@ -338,14 +301,11 @@ set_zsh_default() {
 main() {
     log_info "Starting dotfiles bootstrap..."
 
-    # Check environment
-    if is_container; then
-        log_info "Container environment detected"
-        if ! can_install_packages; then
-            log_warning "Running without root/sudo access in container"
-            log_info "Will install user-level tools only"
-            log_info "System packages (git, curl, zsh, neovim) should be pre-installed in your container"
-        fi
+    # Check permissions
+    if ! can_install_packages; then
+        log_warning "Running without root/sudo access"
+        log_info "Will install user-level tools only"
+        log_info "System packages (git, curl, zsh, neovim) should be pre-installed or available"
     fi
 
     install_package_manager
@@ -356,8 +316,8 @@ main() {
     set_zsh_default
 
     log_success "Bootstrap completed successfully!"
-    if ! can_install_packages && is_container; then
-        log_info "Note: Some system packages may need to be installed manually or added to your devcontainer configuration"
+    if ! can_install_packages; then
+        log_info "Note: Some system packages may need to be installed manually with appropriate permissions"
     fi
     log_info "Please restart your terminal or run: source ~/.zshrc"
 }

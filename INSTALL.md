@@ -62,7 +62,7 @@ exec zsh
 - **Zsh** with standalone plugins (autosuggestions, syntax highlighting, history search)
 - **Neovim** with custom configuration from your nvim-config repository
 - **Starship** prompt
-- **Modern CLI tools**: bat, exa, fd, ripgrep, fzf, zoxide
+- **Modern CLI tools**: bat, eza, fd, ripgrep, fzf, zoxide
 - **Node.js** via NVM
 - **Git** configuration with useful aliases
 - **Shell aliases** for productivity
