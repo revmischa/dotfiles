@@ -18,27 +18,45 @@ command -v btm >/dev/null && alias top="btm"
 command -v nvim >/dev/null && alias vim="nvim" && alias vi="nvim"
 
 # Git aliases
-alias g="git"
-alias gst="git status"
-alias gco="git checkout"
-alias gcb="git checkout -b"
-alias gp="git pull"
-alias gps="git push"
-alias gaa="git add ."
-alias gc="git commit"
-alias gcm="git commit -m"
-alias gca="git commit --amend"
-alias gl="git log --oneline --graph --decorate"
-alias gd="git diff"
-alias gdc="git diff --cached"
-alias gb="git branch"
-alias gbd="git branch -d"
-alias gm="git merge"
-alias gr="git rebase"
-alias gri="git rebase -i"
-alias gs="git stash"
-alias gsp="git stash pop"
-alias gsl="git stash list"
+alias g='git'
+compdef g=git
+alias gst='git status'
+compdef _git gst=git-status
+alias gl='git pull'
+compdef _git gl=git-pull
+alias gup='git fetch && git rebase'
+compdef _git gup=git-fetch
+alias gp='git push'
+compdef _git gp=git-push
+gdv() { git diff -w "$@" | view - }
+compdef _git gdv=git-diff
+alias gc='git commit -v'
+compdef _git gc=git-commit
+alias gca='git commit -v -a'
+compdef _git gca=git-commit
+alias gco='git checkout'
+compdef _git gco=git-checkout
+alias gcm='git checkout master'
+alias gb='git branch'
+compdef _git gb=git-branch
+alias gba='git branch -a'
+compdef _git gba=git-branch
+alias gcount='git shortlog -sn'
+compdef gcount=git
+alias gcp='git cherry-pick'
+compdef _git gcp=git-cherry-pick
+alias glg='git log --stat --max-count=5'
+compdef _git glg=git-log
+alias glgg='git log --graph --max-count=5'
+compdef _git glgg=git-log
+alias gss='git status -s'
+compdef _git gss=git-status
+alias ga='git add'
+compdef _git ga=git-add
+alias gm='git merge'
+compdef _git gm=git-merge
+alias grh='git reset HEAD'
+alias grhh='git reset HEAD --hard'
 
 # Docker
 alias dk="docker"
@@ -97,14 +115,6 @@ alias pip="pip3"
 alias venv="python3 -m venv"
 alias activate="source venv/bin/activate"
 
-# Poetry
-alias po="poetry"
-alias poi="poetry install"
-alias pon="poetry new"
-alias pos="poetry shell"
-alias por="poetry run"
-alias poa="poetry add"
-alias pod="poetry add --group dev"
 
 # Rust
 alias ca="cargo"
