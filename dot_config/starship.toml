@@ -1,9 +1,8 @@
-# Starship configuration
+# Starship configuration - Clean single line prompt
 # Documentation: https://starship.rs/config/
 
-format = """
-[┌─ ](bold green)$all$character
-[└─>](bold green) """
+# Clean single line format
+format = "$all$character"
 
 # Disable the blank line at the start of the prompt
 add_newline = false
@@ -12,9 +11,9 @@ add_newline = false
 command_timeout = 1000
 
 [character]
-success_symbol = " [➜](bold green)"
-error_symbol = " [➜](bold red)"
-vimcmd_symbol = " [←](bold green)"
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
+vimcmd_symbol = "[←](bold green)"
 
 [directory]
 truncation_length = 3
@@ -84,23 +83,18 @@ symbol = "💠 "
 style = "bold purple"
 format = "via [$symbol$workspace]($style) "
 
+# Disable time module (clock)
 [time]
-disabled = false
-time_format = "%R"
-style = "bold white"
-format = "🕙 [$time]($style) "
+disabled = true
 
 [cmd_duration]
 min_time = 2_000
 style = "bold yellow"
 format = "took [$duration]($style) "
 
+# Disable memory usage for cleaner look
 [memory_usage]
-disabled = false
-threshold = 70
-symbol = "🐏 "
-style = "bold dimmed white"
-format = "via $symbol[${ram}( | ${swap})]($style) "
+disabled = true
 
 [battery]
 full_symbol = "🔋 "

@@ -1,60 +1,80 @@
 # Git configuration
 [user]
-    name = {{ .name | quote }}
-    email = {{ .email | quote }}
+	name = {{ .name | quote }}
+	email = {{ .email | quote }}
 
 [core]
-    excludesfile = ~/.gitignore_global
-    editor = code --wait
+	excludesfile = ~/.gitignore_global
+	editor = nvim
 
 [init]
-    defaultBranch = main
+	defaultBranch = main
 
 [push]
-    default = current
-    autoSetupRemote = true
+	default = tracking
+	autoSetupRemote = true
 
 [pull]
-    rebase = true
+	rebase = true
 
 [merge]
-    ff = false
+	renamelimit = 6000
+	ff = false
 
-[alias]
-    # Status and basic commands
-    st = status
-    ci = commit
-    co = checkout
-    br = branch
-
-    # Logs and history
-    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-    lol = log --graph --decorate --pretty=oneline --abbrev-commit
-    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
-
-    # Diffs
-    di = diff
-    dc = diff --cached
-
-    # Push/pull
-    pom = pull origin main
-    pso = push --set-upstream origin
-
-    # Utilities
-    up = !git pull --rebase --prune && git log --pretty=format:\"%Cred%ae %Creset- %C(yellow)%s %Creset(%ar)\" HEAD@{1}..
-    wipe = !git reset --hard && git clean -fd
-    uncommit = reset --soft HEAD~1
+[branch "master"]
+	rebase = true
 
 [color]
-    ui = auto
+	ui = auto
+	diff = auto
+	status = auto
+	branch = auto
 
-[color "diff"]
-    meta = yellow bold
-    frag = magenta bold
-    old = red bold
-    new = green bold
+[alias]
+	# Logs and history
+	lg = log -p
+	lol = log --graph --decorate --pretty=oneline --abbrev-commit
+	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+	lo = log --graph --decorate --all --oneline --stat
+	dlog = log -u HEAD~500..HEAD --
 
-[color "status"]
-    added = green
-    changed = yellow
-    untracked = red
+	# Branch management
+	rb = ! git for-each-ref --sort=-committerdate --count=20 --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' refs/heads/
+	rrb = ! git for-each-ref --sort=-committerdate --count=20 --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' refs/remotes/origin/
+
+	# Push/Pull shortcuts
+	pom = pull origin master
+	pso = push --set-upstream origin
+	pnv = push --no-verify
+
+	# Utilities
+	up = !sh -c 'git pull --rebase --prune && git log --pretty=format:\"%Cred%ae %Creset- %C(yellow)%s %Creset(%ar)\" HEAD@{1}..'
+	mm = merge master -m "Merging in master"
+	rbc = rebase --continue
+	ls = ls-files
+	tags = tag -ln
+	diverges = !bash -c 'diff -u <(git rev-list --first-parent "${1}") <(git rev-list --first-parent "${2:-HEAD}") | sed -ne \"s/^ //p\" | head -1' -
+
+[help]
+	autocorrect = 3
+
+[github]
+	user = revmischa
+
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+
+[merge "npm-merge-driver"]
+	name = automatically merge npm lockfiles
+	driver = npx npm-merge-driver merge %A %O %B %P
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[filter "media"]
+	clean = git media clean %f
+	smudge = git media smudge %f
+	required = true

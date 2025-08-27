@@ -280,17 +280,23 @@ set_zsh_default() {
         log_info "Setting Zsh as default shell..."
 
         # Add zsh to allowed shells if not present
-        if ! grep -q "$(which zsh)" /etc/shells 2>/dev/null; then
-            if ! echo "$(which zsh)" | safe_sudo tee -a /etc/shells >/dev/null 2>&1; then
-                log_warning "Could not update /etc/shells. You may need to do this manually."
+        local zsh_path=$(which zsh)
+        if ! grep -q "$zsh_path" /etc/shells 2>/dev/null; then
+            if echo "$zsh_path" | safe_sudo tee -a /etc/shells >/dev/null 2>&1; then
+                log_info "Added $zsh_path to /etc/shells"
+            else
+                log_warning "Could not update /etc/shells. You may need to add $zsh_path manually."
             fi
         fi
 
-        # Change default shell
-        if ! chsh -s "$(which zsh)" 2>/dev/null; then
-            log_warning "Could not change default shell. You may need to run: chsh -s $(which zsh)"
-        else
+        # Change default shell - try non-interactive first
+        log_info "Attempting to change default shell to zsh..."
+        if timeout 10s chsh -s "$zsh_path" </dev/null >/dev/null 2>&1; then
             log_success "Zsh set as default shell (restart terminal to take effect)"
+        else
+            log_warning "Could not change default shell automatically."
+            log_info "To change manually, run: chsh -s $zsh_path"
+            log_info "You may be prompted for your password."
         fi
     else
         log_info "Zsh is already the default shell"
