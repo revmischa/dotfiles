@@ -17,46 +17,27 @@ command -v rg >/dev/null && alias grep="rg"
 command -v btm >/dev/null && alias top="btm"
 command -v nvim >/dev/null && alias vim="nvim" && alias vi="nvim"
 
-# Git aliases
-alias g='git'
-compdef g=git
-alias gst='git status'
-compdef _git gst=git-status
-alias gl='git pull'
-compdef _git gl=git-pull
-alias gup='git fetch && git rebase'
-compdef _git gup=git-fetch
-alias gp='git push'
-compdef _git gp=git-push
-gdv() { git diff -w "$@" | view - }
-compdef _git gdv=git-diff
-alias gc='git commit -v'
-compdef _git gc=git-commit
-alias gca='git commit -v -a'
-compdef _git gca=git-commit
-alias gco='git checkout'
-compdef _git gco=git-checkout
-alias gcm='git checkout master'
-alias gb='git branch'
-compdef _git gb=git-branch
-alias gba='git branch -a'
-compdef _git gba=git-branch
-alias gcount='git shortlog -sn'
-compdef gcount=git
-alias gcp='git cherry-pick'
-compdef _git gcp=git-cherry-pick
-alias glg='git log --stat --max-count=5'
-compdef _git glg=git-log
-alias glgg='git log --graph --max-count=5'
-compdef _git glgg=git-log
-alias gss='git status -s'
-compdef _git gss=git-status
-alias ga='git add'
-compdef _git ga=git-add
-alias gm='git merge'
-compdef _git gm=git-merge
-alias grh='git reset HEAD'
-alias grhh='git reset HEAD --hard'
+# git
+alias gi='gitui'
+alias gsup="git submodule foreach 'git pull'"
+alias gcom="git checkout master"
+alias gcoom="git checkout origin/master"
+alias gcod="git checkout develop"
+alias gcood="git checkout origin/develop"
+alias gcum="git fetch up && git merge up/master -m 'merging upstream'"
+alias gmod="git merge origin/develop"
+alias gmoom="git merge origin/master"
+alias pp='git pull && git push'
+alias gpop="git push origin master:prod"
+alias cam='git commit -am'
+alias ci="git commit"
+alias lg="lazygit"
+alias grbom="git rebase origin/master"
+alias grbom-theirs="git rebase -Xtheirs origin/master"
+alias grbom-ours="git rebase -Xours origin/master"
+alias smup="pushd ~/.emacs.d && git pull --rebase && popd"
+alias wip="git commit -am 'WIP'"
+alias wipp="wip && gp"
 
 alias gbr="git branch --remote"
 alias gsw="git switch"
@@ -110,15 +91,17 @@ alias apt-remove="sudo apt remove"
 {{- end }}
 
 # Node.js and npm
-alias n="npm"
-alias ni="npm install"
-alias nid="npm install --save-dev"
-alias nis="npm install --save"
-alias nr="npm run"
-alias ns="npm start"
-alias nt="npm test"
-alias nb="npm run build"
-alias nc="npm run clean"
+alias p="pnpm"
+alias pi="pnpm i"
+alias pid="pnpm i -D"
+alias pr="pnpm run"
+alias px='pnpm exec'
+alias pns="pnpm start"
+alias pt='pnpm test'
+alias prb='pnpm build'
+alias vt='pnpm exec vitest'
+alias vr='vt run'
+alias sst='pnpm exec sst'
 
 # Python
 alias py="python3"
@@ -126,22 +109,13 @@ alias pip="pip3"
 alias venv="python3 -m venv"
 alias activate="source venv/bin/activate"
 
-
 # Rust
 alias ca="cargo"
 alias cab="cargo build"
 alias car="cargo run"
-alias cat="cargo test"
 alias cac="cargo check"
 alias caf="cargo fmt"
 alias cal="cargo clippy"
-
-# Go
-alias gob="go build"
-alias gor="go run"
-alias got="go test"
-alias gom="go mod"
-alias gog="go get"
 
 # Development
 alias serve="python3 -m http.server 8000"
