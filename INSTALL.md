@@ -13,11 +13,13 @@ This guide will help you set up your new chezmoi-based dotfiles.
 ### 1. Install chezmoi
 
 **macOS:**
+
 ```bash
 brew install chezmoi
 ```
 
 **Linux:**
+
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)"
 ```

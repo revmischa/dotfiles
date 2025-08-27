@@ -227,7 +227,7 @@ install_essentials() {
                 log_info "Installing Starship manually..."
                 # Create local bin directory
                 mkdir -p "$HOME/.local/bin"
-                
+
                 # Install starship to user directory
                 if can_install_packages; then
                     curl -sS https://starship.rs/install.sh | sh -s -- --yes
@@ -337,7 +337,7 @@ set_zsh_default() {
 # Main installation
 main() {
     log_info "Starting dotfiles bootstrap..."
-    
+
     # Check environment
     if is_container; then
         log_info "Container environment detected"
@@ -360,5 +360,7 @@ main() {
         log_info "Note: Some system packages may need to be installed manually or added to your devcontainer configuration"
     fi
     log_info "Please restart your terminal or run: source ~/.zshrc"
-}# Run main function
+}
+
+# Run main function
 main "$@"
