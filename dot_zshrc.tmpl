@@ -20,30 +20,77 @@ setopt EXTENDED_GLOB        # Extended globbing
 setopt NO_BEEP              # No beeping
 setopt PROMPT_SUBST         # Allow parameter expansion in prompts
 
-# Completion system
+# Antidote plugin manager
+# Clone antidote if necessary and generate static plugin file
+zsh_plugins=${ZDOTDIR:-$HOME}/.zsh_plugins
+if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+  # Clone antidote if necessary
+  [[ -e ${ZDOTDIR:-$HOME}/.antidote ]] ||
+    git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
+
+  # Generate static plugin file
+  source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
+  antidote bundle <${zsh_plugins}.txt >${zsh_plugins}.zsh
+fi
+
+# Source the static plugins file
+source ${zsh_plugins}.zsh
+
+# Completion system (after plugins are loaded)
 autoload -Uz compinit
-compinit
+
+# Performance optimization: only check for new completions once per day
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 # Case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
-# Load Zsh plugins (without Oh My Zsh)
-# zsh-autosuggestions
-[[ -f "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
+# Additional completion styling
+zstyle ':completion:*' menu select
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
 
-# zsh-syntax-highlighting (must be loaded last)
-[[ -f "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+# Enable completion caching
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path ${ZDOTDIR:-$HOME}/.zcompcache
 
-# zsh-history-substring-search
-[[ -f "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh" ]] && source "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh"
+# Improve completion performance
+zstyle ':completion:*' accept-exact '*(N)'
+zstyle ':completion:*' squeeze-slashes true
+
+# Better completion for kill command
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;34=0=01'
+zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm -w -w"
+
+# Tool-specific completion configurations
+# Enable kubectl completion if available
+if command -v kubectl >/dev/null 2>&1; then
+  source <(kubectl completion zsh)
+fi
+
+# Enable AWS CLI completion if available
+if command -v aws >/dev/null 2>&1; then
+  complete -C aws_completer aws
+fi
+
+# Enable Docker completion if available
+if command -v docker >/dev/null 2>&1; then
+  # Docker completion is handled by the plugin
+  zstyle ':completion:*:*:docker:*' option-stacking yes
+  zstyle ':completion:*:*:docker-*:*' option-stacking yes
+fi
 
 # Key bindings for history substring search
-if [[ -n "${key[Up]}" ]]; then
-    bindkey "${key[Up]}" history-substring-search-up
-fi
-if [[ -n "${key[Down]}" ]]; then
-    bindkey "${key[Down]}" history-substring-search-down
-fi
+# These will be available after the plugins are loaded
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
 
 # Load aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
@@ -123,3 +170,4 @@ fi
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init zsh)"
 fi
+
