@@ -78,9 +78,39 @@ if command -v aws >/dev/null 2>&1; then
   complete -C aws_completer aws
 fi
 
-# Enable Docker completion if available
+# Enable pip completion if available
+if command -v pip >/dev/null 2>&1; then
+  eval "$(pip completion --zsh)"
+fi
+
+# Enable pip3 completion if available
+if command -v pip3 >/dev/null 2>&1; then
+  eval "$(pip3 completion --zsh)"
+fi
+
+# Enable uv completion if available
+if command -v uv >/dev/null 2>&1; then
+  eval "$(uv generate-shell-completion zsh)"
+fi
+
+# Enable terraform completion if available
+if command -v terraform >/dev/null 2>&1; then
+  complete -o nospace -C terraform terraform
+fi
+
+# Enable tofu completion if available
+if command -v tofu >/dev/null 2>&1; then
+  complete -o nospace -C tofu tofu
+fi
+
+# Enable cargo completion if available
+if command -v rustc >/dev/null 2>&1; then
+  # Rust completions are usually installed with rustup
+  [[ -f ~/.rustup/toolchains/*/etc/bash_completion.d/cargo ]] && source ~/.rustup/toolchains/*/etc/bash_completion.d/cargo
+fi
+
+# Docker completion styling
 if command -v docker >/dev/null 2>&1; then
-  # Docker completion is handled by the plugin
   zstyle ':completion:*:*:docker:*' option-stacking yes
   zstyle ':completion:*:*:docker-*:*' option-stacking yes
 fi

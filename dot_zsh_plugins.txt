@@ -10,33 +10,14 @@ zsh-users/zsh-history-substring-search
 lukechilds/zsh-nvm
 g-plane/pnpm-shell-completion
 
-# Python ecosystem completions
-zsh-users/zsh-completions path:src/_pip
-zsh-users/zsh-completions path:src/_uv
+# General completions bundle - provides completions for many tools
+zsh-users/zsh-completions
 
-# AWS CLI completions
-zsh-users/zsh-completions path:src/_aws
-
-# Docker completions
-docker/cli contrib/completion/zsh/_docker
-docker/compose contrib/completion/zsh/_docker-compose
-
-# Kubernetes completions
-zsh-users/zsh-completions path:src/_kubectl
-
-# Development tool completions
-zsh-users/zsh-completions path:src/_cargo
-zsh-users/zsh-completions path:src/_rustc
-zsh-users/zsh-completions path:src/_terraform
-zsh-users/zsh-completions path:src/_tofu
-
-# Git completions (enhanced)
-zsh-users/zsh-completions path:src/_git
+# Docker completions - using proper paths
+docker/cli path:contrib/completion/zsh kind:fpath
+docker/compose path:contrib/completion/zsh kind:fpath
 
 # System tool completions
 {{- if .isMacOS }}
-zsh-users/zsh-completions path:src/_brew
+# Homebrew completions are usually handled by brew itself
 {{- end }}
-
-# General completions bundle (must be last to avoid conflicts)
-zsh-users/zsh-completions
