@@ -18,6 +18,4 @@ docker/cli path:contrib/completion/zsh kind:fpath
 docker/compose path:contrib/completion/zsh kind:fpath
 
 # System tool completions
-{{- if .isMacOS }}
 # Homebrew completions are usually handled by brew itself
-{{- end }}

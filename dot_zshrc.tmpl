@@ -20,23 +20,7 @@ setopt EXTENDED_GLOB        # Extended globbing
 setopt NO_BEEP              # No beeping
 setopt PROMPT_SUBST         # Allow parameter expansion in prompts
 
-# Antidote plugin manager
-# Clone antidote if necessary and generate static plugin file
-zsh_plugins=${ZDOTDIR:-$HOME}/.zsh_plugins
-if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
-  # Clone antidote if necessary
-  [[ -e ${ZDOTDIR:-$HOME}/.antidote ]] ||
-    git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
-
-  # Generate static plugin file
-  source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
-  antidote bundle <${zsh_plugins}.txt >${zsh_plugins}.zsh
-fi
-
-# Source the static plugins file
-source ${zsh_plugins}.zsh
-
-# Completion system (after plugins are loaded)
+# Completion system (initialize early)
 autoload -Uz compinit
 
 # Performance optimization: only check for new completions once per day
@@ -45,6 +29,22 @@ if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
 else
   compinit -C
 fi
+
+# Antidote plugin manager
+# Clone antidote if necessary and generate static plugin file
+zsh_plugins=${ZDOTDIR:-$HOME}/.zsh_plugins
+if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+  # Clone antidote if necessary
+  [[ -e ${ZDOTDIR:-$HOME}/.antidote ]] ||
+    git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
+  
+  # Generate static plugin file
+  source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
+  antidote bundle <${zsh_plugins}.txt >${zsh_plugins}.zsh
+fi
+
+# Source the static plugins file
+source ${zsh_plugins}.zsh
 
 # Case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -138,8 +138,6 @@ export VISUAL="$EDITOR"
 # Development paths
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/bin:$PATH"
-
-{{- if .isMacOS }}
 # macOS specific configuration
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/usr/local/bin:$PATH"
@@ -148,17 +146,6 @@ export PATH="/usr/local/bin:$PATH"
 if command -v brew >/dev/null 2>&1; then
     eval "$(brew shellenv)"
 fi
-{{- end }}
-
-{{- if .isLinux }}
-# Linux specific configuration
-export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-
-# Linuxbrew
-if [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-{{- end }}
 
 # Node.js version manager
 export NVM_DIR="$HOME/.nvm"
@@ -166,11 +153,7 @@ export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
 
 # pnpm
-{{- if .isMacOS }}
-export PNPM_HOME="/Users/{{ .chezmoi.username }}/Library/pnpm"
-{{- else if .isLinux }}
-export PNPM_HOME="$HOME/.local/share/pnpm"
-{{- end }}
+export PNPM_HOME="/Users/mish/Library/pnpm"
 if [[ -n "$PNPM_HOME" ]]; then
   case ":$PATH:" in
     *":$PNPM_HOME:"*) ;;
