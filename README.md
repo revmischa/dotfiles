@@ -7,7 +7,7 @@ A minimal, clean dotfiles setup using [chezmoi](https://www.chezmoi.io/) for man
 - **Zsh configuration** with [antidote](https://github.com/mattmc3/antidote) plugin manager
 - **Comprehensive completions** for npm, pnpm, pip, uv, AWS CLI, Docker, kubectl, and more
 - **Starship prompt** for a beautiful, fast shell prompt
-- **Neovim configuration** with modern IDE features
+- **[Neovim configuration](https://github.com/revmischa/nvim-config)** with modern IDE features
 - **Git configuration** with useful aliases and settings
 - **Shell aliases** for productivity
 - **Cross-platform support** for macOS and Linux/devcontainers
