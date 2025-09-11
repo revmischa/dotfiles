@@ -42,6 +42,10 @@ A minimal, clean dotfiles setup using [chezmoi](https://www.chezmoi.io/) for man
    chezmoi apply -v
    ```
 
+5. Install a [Nerd Font](https://www.nerdfonts.com/font-downloads) and use it in your terminal
+   
+   This gives you some icons.
+
 ## What it does
 
 - Sets up Zsh with antidote plugin manager for fast, reliable plugin loading
