@@ -3,8 +3,8 @@
 
 [data]
     # Personal information
-    name = "Mischa Spiegelmock"
-    email = "me@mish.dev"
+    name = {{ promptString "name" "(git) What is your full name" | quote }}
+    email = {{ promptString "email" "(git) What is your email address" | quote }}
 
     # Detect OS and environment
     isLinux = {{ eq .chezmoi.os "linux" }}
@@ -13,8 +13,7 @@
 
 [edit]
     command = "nvim"
-    args = ["--wait"]
 
 [diff]
     command = "nvim"
-    args = ["--wait", "--diff"]
+    args = ["--diff"]
