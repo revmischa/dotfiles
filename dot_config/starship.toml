@@ -24,7 +24,7 @@ style = "bold cyan"
 format = "[$path]($style)[$read_only]($read_only_style) "
 
 [git_branch]
-symbol = " "
+symbol = "🔗 "
 style = "bold purple"
 format = "on [$symbol$branch]($style) "
 
@@ -43,27 +43,27 @@ renamed = "📛×${count} "
 deleted = "🗑️ ×${count} "
 
 [nodejs]
-symbol = " "
+symbol = "⬢ "
 style = "bold green"
 format = "via [$symbol($version )]($style)"
 
 [python]
-symbol = " "
+symbol = "🐍 "
 style = "bold yellow"
 format = 'via [${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
 
 [rust]
-symbol = " "
+symbol = "🦀 "
 style = "bold red"
 format = "via [$symbol($version )]($style)"
 
 [golang]
-symbol = " "
+symbol = "🐹 "
 style = "bold cyan"
 format = "via [$symbol($version )]($style)"
 
 [docker_context]
-symbol = " "
+symbol = "🐳 "
 style = "bold blue"
 format = "via [$symbol$context]($style) "
 
@@ -74,7 +74,7 @@ style = "bold blue"
 format = 'on [$symbol$context( \($namespace\))]($style) '
 
 [aws]
-symbol = " "
+symbol = "☁️ "
 style = "bold orange"
 format = 'on [$symbol($profile )(\($region\) )]($style)'
 

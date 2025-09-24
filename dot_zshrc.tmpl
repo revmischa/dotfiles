@@ -96,6 +96,11 @@ if command -v uv >/dev/null 2>&1; then
   eval "$(uv generate-shell-completion zsh)"
 fi
 
+# Enable pnpm completion if available
+if command -v pnpm >/dev/null 2>&1; then
+  eval "$(pnpm completion zsh)"
+fi
+
 # Enable terraform completion if available
 if command -v terraform >/dev/null 2>&1; then
   complete -o nospace -C terraform terraform

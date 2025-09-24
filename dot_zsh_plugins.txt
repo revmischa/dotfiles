@@ -8,7 +8,6 @@ zsh-users/zsh-history-substring-search
 
 # Node.js ecosystem completions
 lukechilds/zsh-nvm
-g-plane/pnpm-shell-completion
 
 # General completions bundle - provides completions for many tools
 zsh-users/zsh-completions
