@@ -88,7 +88,7 @@ install_package_manager() {
 
             # Add Homebrew to PATH for Apple Silicon Macs
             if [[ -f "/opt/homebrew/bin/brew" ]]; then
-                echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+                echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >>~/.zprofile
                 eval "$(/opt/homebrew/bin/brew shellenv)"
             fi
 
@@ -161,6 +161,11 @@ install_essentials() {
                 "neovim"
                 "build-essential"
                 "unzip"
+                "zooxide"
+                "eza"
+                "ripgrep"
+                "fzf"
+                "bat"
             )
 
             for package in "${packages[@]}"; do
