@@ -5,7 +5,9 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(chezmoi:*)"
     ],
     "deny": [],
     "ask": []
