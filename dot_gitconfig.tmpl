@@ -1,4 +1,18 @@
 # Git configuration
+{{- /* Only include [user] section if git user is already configured */ -}}
+{{- $gitName := (output "sh" "-c" "git config --global user.name 2>/dev/null || true") | trim }}
+{{- $gitEmail := (output "sh" "-c" "git config --global user.email 2>/dev/null || true") | trim }}
+
+{{- if or $gitName $gitEmail }}
+[user]
+{{-   if $gitName }}
+	name = {{ $gitName | quote }}
+{{-   end }}
+{{-   if $gitEmail }}
+	email = {{ $gitEmail | quote }}
+{{-   end }}
+{{- end }}
+
 [core]
 	excludesfile = ~/.gitignore_global
 
