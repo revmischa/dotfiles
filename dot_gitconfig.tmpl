@@ -1,8 +1,4 @@
 # Git configuration
-[user]
-	name = {{ .name | quote }}
-	email = {{ .email | quote }}
-
 [core]
 	excludesfile = ~/.gitignore_global
 
@@ -33,6 +29,9 @@
 	branch = auto
 
 [alias]
+  # make main==master
+  alias-master-as-main = !git symbolic-ref refs/heads/main refs/heads/master && git symbolic-ref refs/remotes/origin/main refs/remotes/origin/master && git switch main
+
 	# Logs and history
 	lg = log -p
 	lol = log --graph --decorate --pretty=oneline --abbrev-commit
