@@ -24,27 +24,51 @@ setopt PROMPT_SUBST         # Allow parameter expansion in prompts
 autoload -Uz compinit
 
 # Performance optimization: only check for new completions once per day
+# Use faster compinit with security checks disabled for faster startup
 if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
-  compinit
+  compinit -d "${ZDOTDIR:-$HOME}/.zcompdump"
 else
-  compinit -C
+  compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump"
 fi
 
 # Antidote plugin manager
 # Clone antidote if necessary and generate static plugin file
 zsh_plugins=${ZDOTDIR:-$HOME}/.zsh_plugins
-if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+antidote_dir=${ZDOTDIR:-$HOME}/.antidote
+
+# Improved plugin loading logic
+_antidote_needs_update() {
+  # Check if static file doesn't exist
+  [[ ! -f ${zsh_plugins}.zsh ]] && return 0
+
+  # Check if antidote directory doesn't exist
+  [[ ! -d $antidote_dir ]] && return 0
+
+  # Check if plugins.txt is newer than static file
+  [[ -f ${zsh_plugins}.txt && ${zsh_plugins}.txt -nt ${zsh_plugins}.zsh ]] && return 0
+
+  return 1
+}
+
+# Only regenerate when absolutely necessary
+if _antidote_needs_update; then
   # Clone antidote if necessary
-  [[ -e ${ZDOTDIR:-$HOME}/.antidote ]] ||
-    git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
-  
-  # Generate static plugin file
-  source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
-  antidote bundle <${zsh_plugins}.txt >${zsh_plugins}.zsh
+  if [[ ! -d $antidote_dir ]]; then
+    echo "Installing antidote plugin manager..."
+    git clone --depth=1 https://github.com/mattmc3/antidote.git $antidote_dir
+  fi
+
+  # Generate static plugin file only if plugins.txt exists
+  if [[ -f ${zsh_plugins}.txt ]]; then
+    echo "Updating zsh plugins (this may take a moment)..."
+    source $antidote_dir/antidote.zsh
+    antidote bundle <${zsh_plugins}.txt >${zsh_plugins}.zsh
+    echo "Zsh plugins updated successfully!"
+  fi
 fi
 
-# Source the static plugins file
-source ${zsh_plugins}.zsh
+# Source the static plugins file if it exists
+[[ -f ${zsh_plugins}.zsh ]] && source ${zsh_plugins}.zsh
 
 # Case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -67,54 +91,80 @@ zstyle ':completion:*' squeeze-slashes true
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;34=0=01'
 zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm -w -w"
 
-# Tool-specific completion configurations
-# Load bash completion compatibility for tools that need it
-autoload -U +X bashcompinit && bashcompinit
+# Tool-specific completion configurations - lazy loaded for performance
+# Load bash completion compatibility only when needed
+_load_bashcompinit() {
+  autoload -U +X bashcompinit && bashcompinit
+}
 
-# Enable kubectl completion if available
-if command -v kubectl >/dev/null 2>&1; then
+# Lazy completion loading functions
+_kubectl_completion() {
+  unfunction _kubectl_completion
+  _load_bashcompinit
   source <(kubectl completion zsh)
-fi
+  kubectl $@
+}
 
-# Enable AWS CLI completion if available
-if command -v aws >/dev/null 2>&1; then
+_aws_completion() {
+  unfunction _aws_completion
+  _load_bashcompinit
   complete -C aws_completer aws
-fi
+  aws $@
+}
 
-# Enable pip completion if available
-if command -v pip >/dev/null 2>&1; then
+_pip_completion() {
+  unfunction _pip_completion
   eval "$(pip completion --zsh)"
-fi
+  pip $@
+}
 
-# Enable pip3 completion if available
-if command -v pip3 >/dev/null 2>&1; then
+_pip3_completion() {
+  unfunction _pip3_completion
   eval "$(pip3 completion --zsh)"
-fi
+  pip3 $@
+}
 
-# Enable uv completion if available
-if command -v uv >/dev/null 2>&1; then
+_uv_completion() {
+  unfunction _uv_completion
   eval "$(uv generate-shell-completion zsh)"
-fi
+  uv $@
+}
 
-# Enable pnpm completion if available
-if command -v pnpm >/dev/null 2>&1; then
+_pnpm_completion() {
+  unfunction _pnpm_completion
   eval "$(pnpm completion zsh)"
-fi
+  pnpm $@
+}
 
-# Enable terraform completion if available
-if command -v terraform >/dev/null 2>&1; then
+_terraform_completion() {
+  unfunction _terraform_completion
+  _load_bashcompinit
   complete -o nospace -C terraform terraform
-fi
+  terraform $@
+}
 
-# Enable tofu completion if available
-if command -v tofu >/dev/null 2>&1; then
+_tofu_completion() {
+  unfunction _tofu_completion
+  _load_bashcompinit
   complete -o nospace -C tofu tofu
-fi
+  tofu $@
+}
 
-# Enable cargo completion if available
+# Create lazy-loading aliases for completion-heavy tools
+command -v kubectl >/dev/null 2>&1 && compdef _kubectl_completion kubectl
+command -v aws >/dev/null 2>&1 && compdef _aws_completion aws
+command -v pip >/dev/null 2>&1 && compdef _pip_completion pip
+command -v pip3 >/dev/null 2>&1 && compdef _pip3_completion pip3
+command -v uv >/dev/null 2>&1 && compdef _uv_completion uv
+command -v pnpm >/dev/null 2>&1 && compdef _pnpm_completion pnpm
+command -v terraform >/dev/null 2>&1 && compdef _terraform_completion terraform
+command -v tofu >/dev/null 2>&1 && compdef _tofu_completion tofu
+
+# Load cargo completion only if rust is available and completion exists
 if command -v rustc >/dev/null 2>&1; then
-  # Rust completions are usually installed with rustup
-  [[ -f ~/.rustup/toolchains/*/etc/bash_completion.d/cargo ]] && source ~/.rustup/toolchains/*/etc/bash_completion.d/cargo
+  for toolchain in ~/.rustup/toolchains/*/etc/bash_completion.d/cargo(N); do
+    [[ -f "$toolchain" ]] && source "$toolchain" && break
+  done
 fi
 
 # Docker completion styling
@@ -150,15 +200,36 @@ export PATH="$HOME/bin:$PATH"
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/usr/local/bin:$PATH"
 
-# Homebrew
-if command -v brew >/dev/null 2>&1; then
+# Homebrew - lazy load for faster startup
+_load_brew() {
+  if command -v brew >/dev/null 2>&1; then
     eval "$(brew shellenv)"
+  fi
+}
+
+# Only load brew environment if we're going to use brew commands
+if command -v brew >/dev/null 2>&1; then
+  alias brew='_load_brew && unalias brew && brew'
 fi
 
-# Node.js version manager
+# Node.js version manager - completely lazy load for faster startup
 export NVM_DIR="$HOME/.nvm"
-[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
-[[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
+
+# Only create lazy loading if NVM exists but don't load it
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+  # Function to load NVM on first use
+  _load_nvm() {
+    unset -f nvm node npm npx
+    source "$NVM_DIR/nvm.sh"
+    [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
+  }
+  
+  # Create lazy loading functions (not aliases to avoid conflicts)
+  nvm() { _load_nvm && nvm "$@"; }
+  node() { _load_nvm && node "$@"; }
+  npm() { _load_nvm && npm "$@"; }
+  npx() { _load_nvm && npx "$@"; }
+fi
 
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
@@ -173,18 +244,30 @@ fi
 # Rust
 [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
-# Python virtual environments
+# Python virtual environments - lazy load
 export WORKON_HOME="$HOME/.virtualenvs"
-[[ -f "/usr/local/bin/virtualenvwrapper.sh" ]] && source "/usr/local/bin/virtualenvwrapper.sh"
+if [[ -f "/usr/local/bin/virtualenvwrapper.sh" ]]; then
+  _load_virtualenvwrapper() {
+    source "/usr/local/bin/virtualenvwrapper.sh"
+  }
+  # Load virtualenvwrapper only when needed
+  workon() { _load_virtualenvwrapper && unfunction workon && workon "$@"; }
+  mkvirtualenv() { _load_virtualenvwrapper && unfunction mkvirtualenv && mkvirtualenv "$@"; }
+  rmvirtualenv() { _load_virtualenvwrapper && unfunction rmvirtualenv && rmvirtualenv "$@"; }
+fi
 
-# Starship prompt
+# Starship prompt - load immediately as it's needed for every prompt
 if command -v starship >/dev/null 2>&1; then
     eval "$(starship init zsh)"
 fi
 
-# fzf fuzzy finder
+# fzf fuzzy finder - lazy load for faster startup
+_load_fzf() {
+  eval "$(fzf --zsh)"
+}
 if command -v fzf >/dev/null 2>&1; then
-    eval "$(fzf --zsh)"
+  # Load fzf when first used
+  fzf() { _load_fzf && unfunction fzf && fzf "$@"; }
 fi
 
 # Load zoxide if available

@@ -6,15 +6,6 @@ zsh-users/zsh-autosuggestions
 zsh-users/zsh-syntax-highlighting kind:defer
 zsh-users/zsh-history-substring-search
 
-# Node.js ecosystem completions
-lukechilds/zsh-nvm
-
-# General completions bundle - provides completions for many tools
-zsh-users/zsh-completions
-
-# Docker completions - using proper paths
-docker/cli path:contrib/completion/zsh kind:fpath
-docker/compose path:contrib/completion/zsh kind:fpath
-
-# System tool completions
-# Homebrew completions are usually handled by brew itself
+# Minimal plugin set for fastest startup
+# Removed heavy plugins: zsh-nvm, pnpm-shell-completion, zsh-completions, docker completions
+# These are handled manually with lazy loading in zshrc

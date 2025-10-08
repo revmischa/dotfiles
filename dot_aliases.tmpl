@@ -16,14 +16,15 @@ command -v fd >/dev/null && alias find="fd"
 command -v rg >/dev/null && alias grep="rg"
 command -v nvim >/dev/null && alias vim="nvim" && alias vi="nvim"
 
+# aws
+alias asso='aws sso login'
+
 # git
 alias git-pull='git pull --no-edit'
 alias gi='gitui'
 alias gsup="git submodule foreach 'git pull'"
-alias gcom="git checkout master"
+alias gcom="git switch master"
 alias gcoom="git checkout origin/master"
-alias gcod="git checkout develop"
-alias gcood="git checkout origin/develop"
 alias gcum="git fetch up && git merge up/master -m 'merging upstream'"
 alias gmod="git merge origin/develop"
 alias gmoom="git merge origin/master"
@@ -47,7 +48,7 @@ alias gswm="git switch master"
 alias gswd="git switch develop"
 alias gswt="git switch -t"
 alias gswr="git switch -r"
-
+alias gsa="git stash apply"
 
 
 # Docker

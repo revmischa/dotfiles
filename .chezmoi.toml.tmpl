@@ -2,10 +2,6 @@
 # Documentation: https://www.chezmoi.io/reference/configuration-file/
 
 [data]
-    # Personal information
-    name = {{ promptString "name" "(git) What is your full name" | quote }}
-    email = {{ promptString "email" "(git) What is your email address" | quote }}
-
     # Detect OS and environment
     isLinux = {{ eq .chezmoi.os "linux" }}
     isMacOS = {{ eq .chezmoi.os "darwin" }}
@@ -14,6 +10,6 @@
 [edit]
     command = "nvim"
 
-[diff]
-    command = "nvim"
-    args = ["--diff"]
+#[diff]
+#    command = "nvim"
+#    args = ["--diff"]
