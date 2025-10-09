@@ -264,13 +264,9 @@ if command -v starship >/dev/null 2>&1; then
     eval "$(starship init zsh)"
 fi
 
-# fzf fuzzy finder - lazy load for faster startup
-_load_fzf() {
-  eval "$(fzf --zsh)"
-}
 if command -v fzf >/dev/null 2>&1; then
-  # Load fzf when first used
-  fzf() { _load_fzf && unfunction fzf && fzf "$@"; }
+  # Load fzf keybindings and completion on startup so history search works immediately
+  eval "$(fzf --zsh)"
 fi
 
 # Load zoxide if available
