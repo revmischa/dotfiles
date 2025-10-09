@@ -160,10 +160,13 @@ command -v pnpm >/dev/null 2>&1 && compdef _pnpm_completion pnpm
 command -v terraform >/dev/null 2>&1 && compdef _terraform_completion terraform
 command -v tofu >/dev/null 2>&1 && compdef _tofu_completion tofu
 
-# Load cargo completion only if rust is available and completion exists
+# Load cargo completion only if rust is available and the zsh completion exists
 if command -v rustc >/dev/null 2>&1; then
-  for toolchain in ~/.rustup/toolchains/*/etc/bash_completion.d/cargo(N); do
-    [[ -f "$toolchain" ]] && source "$toolchain" && break
+  for toolchain_dir in ~/.rustup/toolchains/*/share/zsh/site-functions(N); do
+    fpath=($toolchain_dir $fpath)
+    autoload -Uz _cargo
+    compdef _cargo cargo
+    break
   done
 fi
 
@@ -274,4 +277,3 @@ fi
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init zsh)"
 fi
-
