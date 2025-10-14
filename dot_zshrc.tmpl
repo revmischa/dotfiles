@@ -205,8 +205,18 @@ export PATH="/usr/local/bin:$PATH"
 
 # Homebrew - lazy load for faster startup
 _load_brew() {
-  if command -v brew >/dev/null 2>&1; then
-    eval "$(brew shellenv)"
+  # Use the actual brew binary path to avoid alias recursion
+  local brew_path
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    brew_path="/opt/homebrew/bin/brew"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    brew_path="/usr/local/bin/brew"
+  elif command -v brew >/dev/null 2>&1; then
+    brew_path=$(command -v brew)
+  fi
+
+  if [[ -n "$brew_path" ]]; then
+    eval "$("$brew_path" shellenv)"
   fi
 }
 
