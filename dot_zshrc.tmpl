@@ -176,6 +176,23 @@ if command -v docker >/dev/null 2>&1; then
   zstyle ':completion:*:*:docker-*:*' option-stacking yes
 fi
 
+# Configure word boundaries (bash-like behavior)
+# Remove common delimiters from WORDCHARS so they're treated as word boundaries
+WORDCHARS='*?[]~=&;!#$%^(){}<>'
+
+# Key bindings for word-based navigation (Option+Arrow/Backspace)
+# Option-Left: move backward one word
+bindkey '^[^[[D' backward-word
+bindkey '^[[1;3D' backward-word
+# Option-Right: move forward one word
+bindkey '^[^[[C' forward-word
+bindkey '^[[1;3C' forward-word
+# Option-Backspace: delete backward word
+bindkey '^[^?' backward-kill-word
+bindkey '^[[3;3~' kill-word
+# Option-Delete: delete forward word
+bindkey '^[[3;3~' kill-word
+
 # Key bindings for history substring search
 # These will be available after the plugins are loaded
 bindkey '^[[A' history-substring-search-up
