@@ -7,7 +7,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git config:*)",
-      "Bash(chezmoi:*)"
+      "Bash(chezmoi:*)",
+      "Bash(echo $SHELL)",
+      "Read(//Users/mish/**)",
+      "Bash(compinit -d ~/.zcompdump)",
+      "Bash(basedpyright:*)"
     ],
     "deny": [],
     "ask": []
