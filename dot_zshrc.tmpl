@@ -274,6 +274,9 @@ fi
 # Rust
 [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
+# fuzzy finder
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 # Python virtual environments - lazy load
 export WORKON_HOME="$HOME/.virtualenvs"
 if [[ -f "/usr/local/bin/virtualenvwrapper.sh" ]]; then
@@ -291,10 +294,6 @@ if command -v starship >/dev/null 2>&1; then
     eval "$(starship init zsh)"
 fi
 
-if command -v fzf >/dev/null 2>&1; then
-  # Load fzf keybindings and completion on startup so history search works immediately
-  eval "$(fzf --zsh)"
-fi
 
 # Load zoxide if available
 if command -v zoxide >/dev/null 2>&1; then
