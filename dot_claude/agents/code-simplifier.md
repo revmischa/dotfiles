@@ -1,4 +1,5 @@
 ---
+name: code-simplifier
 description: "Find opportunities to simplify and reduce code complexity"
 ---
 
