@@ -21,3 +21,4 @@ Thumbs.db
 
 # Chezmoi working files
 .chezmoi.toml.local
+.claude/
