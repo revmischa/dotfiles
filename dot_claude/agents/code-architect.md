@@ -1,4 +1,5 @@
 ---
+name: code-architect
 description: "Senior engineer perspective on architecture and structural decisions"
 ---
 

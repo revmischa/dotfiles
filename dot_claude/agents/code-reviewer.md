@@ -1,4 +1,5 @@
 ---
+name: code-reviewer
 description: "Thorough code review for GitHub pull requests"
 ---
 

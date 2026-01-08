@@ -1,4 +1,5 @@
 ---
+name: type-checker
 description: "Enhance type safety and resolve type issues"
 ---
 

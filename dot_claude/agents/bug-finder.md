@@ -1,4 +1,5 @@
 ---
+name: bug-finder
 description: "Find subtle bugs, edge cases, and potential failure modes"
 ---
 
