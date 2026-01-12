@@ -242,25 +242,6 @@ if command -v brew >/dev/null 2>&1; then
   alias brew='_load_brew && unalias brew && brew'
 fi
 
-# Node.js version manager - completely lazy load for faster startup
-export NVM_DIR="$HOME/.nvm"
-
-# Only create lazy loading if NVM exists but don't load it
-if [[ -s "$NVM_DIR/nvm.sh" ]]; then
-  # Function to load NVM on first use
-  _load_nvm() {
-    unset -f nvm node npm npx
-    source "$NVM_DIR/nvm.sh"
-    [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
-  }
-  
-  # Create lazy loading functions (not aliases to avoid conflicts)
-  nvm() { _load_nvm && nvm "$@"; }
-  node() { _load_nvm && node "$@"; }
-  npm() { _load_nvm && npm "$@"; }
-  npx() { _load_nvm && npx "$@"; }
-fi
-
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
 if [[ -n "$PNPM_HOME" ]]; then
@@ -298,4 +279,7 @@ fi
 # Load zoxide if available
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init zsh)"
-fi
+f
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
