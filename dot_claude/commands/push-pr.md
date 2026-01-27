@@ -2,7 +2,11 @@
 description: "Push changes and create a GitHub pull request"
 ---
 
-Push my changes and create a pull request. Follow this workflow:
+Push my changes.
+
+# If there is not an open PR:
+
+Create a draft pull request. Follow this workflow:
 
 ## 1. Review Current State
 
@@ -39,3 +43,9 @@ Use `gh pr create` with:
 ## 4. Error Handling
 
 Halt and report any issues encountered during execution.
+
+# If there is already an open PR:
+
+Push my changes to the existing PR branch.
+Update the PR title and description if necessary.
+Wait and verify that CI checks pass. If not, iterate until they do.
