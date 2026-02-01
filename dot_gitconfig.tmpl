@@ -54,8 +54,8 @@
 	dlog = log -u HEAD~500..HEAD --
 
 	# Branch management
-	rb = ! git for-each-ref --sort=-committerdate --count=20 --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' refs/heads/
-	rrb = ! git for-each-ref --sort=-committerdate --count=20 --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' refs/remotes/origin/
+	rb = ! git for-each-ref --sort=-committerdate --count=30 --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' refs/heads/
+	rrb = ! git for-each-ref --sort=-committerdate --count=30 --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' refs/remotes/origin/
 
 	# Push/Pull shortcuts
 	pom = pull origin master
