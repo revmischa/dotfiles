@@ -179,3 +179,21 @@ alias hidefiles="defaults write com.apple.finder AppleShowAllFiles -bool false &
 alias zshconfig="chezmoi edit ~/.zshrc"
 alias gitconfig="chezmoi edit ~/.gitconfig"
 alias aliasconfig="chezmoi edit ~/.aliases"
+
+# vibes
+alias c='claude --dangerously-skip-permissions'
+alias cc='claude --dangerously-skip-permissions -c'
+alias lg=lazygit
+alias gwf='f() { \
+  repo=$(basename "$(git rev-parse --show-toplevel)") && \
+  base="$HOME/.forest/$repo" && \
+  mkdir -p "$base" && \
+  git worktree add -b "feat/$1" "$base/$1" master && \
+  cd "$base/$1" && \
+  if [ -z "$TMUX" ]; then \
+    tmux new-session -A -s "gwf-$1" "cd \"$(pwd)\" && claude code --dangerously-skip-permissions"; \
+  else \
+    claude code --dangerously-skip-permissions; \
+  fi; \
+}; f'
+

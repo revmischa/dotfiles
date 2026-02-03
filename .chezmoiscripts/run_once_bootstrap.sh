@@ -139,6 +139,7 @@ install_essentials() {
             "eza"
             "zoxide"
             "git-delta"
+            "lazygit"
         )
 
         for package in "${packages[@]}"; do
@@ -166,6 +167,7 @@ install_essentials() {
                 "ripgrep"
                 "fzf"
                 "bat"
+                "lazygit"
             )
 
             for package in "${packages[@]}"; do
