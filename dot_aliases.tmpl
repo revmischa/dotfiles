@@ -75,6 +75,7 @@ alias ke="kubectl exec -it"
 # Terraform
 alias terraform="tofu"
 alias tfmt="tofu fmt -recursive"
+alias taa="tofu apply -var-file=\"$ENVIRONMENT.tfvars\" -auto-approve"
 
 # Package managers
 {{- if eq .chezmoi.os "darwin" }}
