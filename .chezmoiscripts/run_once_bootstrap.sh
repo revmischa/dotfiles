@@ -140,6 +140,7 @@ install_essentials() {
             "zoxide"
             "git-delta"
             "lazygit"
+            "glow"
         )
 
         for package in "${packages[@]}"; do
@@ -168,6 +169,7 @@ install_essentials() {
                 "fzf"
                 "bat"
                 "lazygit"
+                "glow"
             )
 
             for package in "${packages[@]}"; do
