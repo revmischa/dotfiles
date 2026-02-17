@@ -189,7 +189,7 @@ alias gwf='f() { \
   repo=$(basename "$(git rev-parse --show-toplevel)") && \
   base="$HOME/.forest/$repo" && \
   mkdir -p "$base" && \
-  git worktree add -b "feat/$1" "$base/$1" master && \
+  git worktree add -b "feat/$1" "$base/$1" $(git_main_branch) && \
   cd "$base/$1" && \
   if [ -z "$TMUX" ]; then \
     tmux new-session -A -s "gwf-$1" "cd \"$(pwd)\" && claude code --dangerously-skip-permissions"; \
