@@ -51,3 +51,7 @@ Halt and report any issues encountered during execution.
 Push my changes to the existing PR branch.
 Update the PR title and description if necessary.
 Wait and verify that CI checks pass. If not, iterate until they do.
+
+# After pushing
+
+Run the /ready command to get the PR ready for review and merging.
