@@ -40,6 +40,8 @@ Use `gh pr create` with:
   - Testing information
   - Any notes for reviewers
 
+Then `open` the PR for me in the browser.
+
 ## 4. Error Handling
 
 Halt and report any issues encountered during execution.
