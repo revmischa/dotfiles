@@ -200,6 +200,74 @@ alias gwf='f() { \
   fi; \
 }; f'
 
+alias gwl='f() { \
+  local repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)") || { printf "\033[31m  not in a git repo\033[0m\n"; return 1; }; \
+  local base="$HOME/.forest/$repo"; \
+  local dirs=("$base"/*(N/)); \
+  if [ ${#dirs} -eq 0 ]; then \
+    printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"; return 0; \
+  fi; \
+  printf "\n\033[1;34m  %s\033[0m \033[2mworktrees\033[0m\n\n" "$repo"; \
+  for d in "${dirs[@]}"; do \
+    local name="${d##*/}"; \
+    local branch=$(git -C "$d" branch --show-current 2>/dev/null); \
+    local short=$(git -C "$d" log -1 --format="%s" 2>/dev/null | cut -c1-50); \
+    local dirty=""; \
+    [ -n "$(git -C "$d" status --porcelain 2>/dev/null)" ] && dirty="\033[33m *\033[0m"; \
+    printf "  \033[32m%-20s\033[0m \033[36m%-25s\033[0m \033[2m%s\033[0m%b\n" "$name" "$branch" "$short" "$dirty"; \
+  done; \
+  printf "\n"; \
+}; f'
+
+alias gwcd='f() { \
+  local repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)") || { printf "\033[31m  not in a git repo\033[0m\n"; return 1; }; \
+  local base="$HOME/.forest/$repo"; \
+  [ -d "$base" ] || { printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"; return 1; }; \
+  local dirs=("$base"/*(N/)); \
+  [ ${#dirs} -eq 0 ] && { printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"; return 1; }; \
+  if command -v fzf >/dev/null; then \
+    local choice=$( \
+      for d in "${dirs[@]}"; do \
+        local name="${d##*/}"; \
+        local branch=$(git -C "$d" branch --show-current 2>/dev/null); \
+        local dirty=""; \
+        [ -n "$(git -C "$d" status --porcelain 2>/dev/null)" ] && dirty=" *"; \
+        printf "%-20s  %s%s\n" "$name" "$branch" "$dirty"; \
+      done | fzf --prompt="  " --height=~40% --reverse --ansi \
+    ); \
+    [ -n "$choice" ] && cd "$base/$(echo "$choice" | awk "{print \$1}")"; \
+  elif [ -n "$1" ]; then \
+    cd "$base/$1" && printf "\033[32m  %s\033[0m\n" "$base/$1"; \
+  else \
+    gwl; printf "\033[2m  usage: gwcd <name>\033[0m\n"; \
+  fi; \
+}; f'
+
+alias gwrm='f() { \
+  local repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)") || { printf "\033[31m  not in a git repo\033[0m\n"; return 1; }; \
+  local base="$HOME/.forest/$repo"; \
+  [ -d "$base" ] || { printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"; return 1; }; \
+  local dirs=("$base"/*(N/)); \
+  [ ${#dirs} -eq 0 ] && { printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"; return 1; }; \
+  local target="$1"; \
+  if [ -z "$target" ] && command -v fzf >/dev/null; then \
+    target=$( \
+      for d in "${dirs[@]}"; do \
+        local name="${d##*/}"; \
+        local branch=$(git -C "$d" branch --show-current 2>/dev/null); \
+        local dirty=""; \
+        [ -n "$(git -C "$d" status --porcelain 2>/dev/null)" ] && dirty=" *"; \
+        printf "%-20s  %s%s\n" "$name" "$branch" "$dirty"; \
+      done | fzf --prompt="  " --height=~40% --reverse --ansi \
+    ); \
+    [ -n "$target" ] && target=$(echo "$target" | awk "{print \$1}"); \
+  fi; \
+  [ -z "$target" ] && { gwl; printf "\033[2m  usage: gwrm <name>\033[0m\n"; return 1; }; \
+  git worktree remove "$base/$target" 2>/dev/null && \
+    printf "\033[31m  removed\033[0m \033[1m%s\033[0m\n" "$target" || \
+    printf "\033[33m  failed to remove %s\033[0m (use \033[2mgit worktree remove --force\033[0m)\n" "$target"; \
+}; f'
+
 alias gwfc='f() { \
   repo=$(basename "$(git rev-parse --show-toplevel)") && \
   base="$HOME/.forest/$repo" && \
