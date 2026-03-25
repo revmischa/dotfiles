@@ -263,10 +263,18 @@ alias gwrm='f() { \
     [ -n "$target" ] && target=$(echo "$target" | awk "{print \$1}"); \
   fi; \
   [ -z "$target" ] && { gwl; printf "\033[2m  usage: gwrm <name>\033[0m\n"; return 1; }; \
-  git worktree remove "$base/$target" 2>/dev/null && \
+  git worktree remove --force "$base/$target" 2>/dev/null && \
     printf "\033[31m  removed\033[0m \033[1m%s\033[0m\n" "$target" || \
-    printf "\033[33m  failed to remove %s\033[0m (use \033[2mgit worktree remove --force\033[0m)\n" "$target"; \
+    printf "\033[33m  failed to remove %s\033[0m\n" "$target"; \
 }; f'
+
+_gwt_completions() { \
+  local repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null) || return; \
+  local base="$HOME/.forest/$repo"; \
+  [ -d "$base" ] || return; \
+  compadd -- "$base"/*(N/:t); \
+}
+compdef _gwt_completions gwcd gwrm
 
 alias gwfc='f() { \
   repo=$(basename "$(git rev-parse --show-toplevel)") && \
