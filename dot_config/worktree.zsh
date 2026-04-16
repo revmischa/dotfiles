@@ -31,8 +31,10 @@ _gwt_session() {
   local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || { printf "\033[31m  not in a git repo\033[0m\n"; return 1; }
   local repo=$(basename "$toplevel")
   local session_name="$repo/$1"
+  local wt_path="$toplevel/.claude/worktrees/$1"
   local claude_cmd="cd '$toplevel' && claude --dangerously-skip-permissions --worktree '$1' $2"
   tmux new-session -d -s "$session_name" -c "$toplevel" "$SHELL -ic \"$claude_cmd\"" 2>/dev/null
+  tmux set-option -t "$session_name" default-command "cd '$wt_path' 2>/dev/null; exec $SHELL"
   if [ -n "$TMUX" ]; then
     tmux switch-client -t "$session_name"
   else
