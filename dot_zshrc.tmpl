@@ -209,6 +209,9 @@ bindkey '^N' history-substring-search-down
 # Load git aliases
 [[ -f "$HOME/.config/gitaliases.zsh" ]] && source "$HOME/.config/gitaliases.zsh"
 
+# Load worktree helpers
+[[ -f "$HOME/.config/worktree.zsh" ]] && source "$HOME/.config/worktree.zsh"
+
 # Load local configuration
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
 
