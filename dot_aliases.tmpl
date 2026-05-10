@@ -183,8 +183,9 @@ alias gitconfig="chezmoi edit ~/.gitconfig"
 alias aliasconfig="chezmoi edit ~/.aliases"
 
 # vibes
-alias c='claude --dangerously-skip-permissions'
-alias cc='claude --dangerously-skip-permissions -c'
-alias ch='claude --dangerously-skip-permissions --chrome'
+CLAUDE_PERMISSION_MODE=auto
+alias c="claude  --permission-mode $CLAUDE_PERMISSION_MODE"
+alias cc="claude --permission-mode $CLAUDE_PERMISSION_MODE -c"
+alias ch="claude --permission-mode $CLAUDE_PERMISSION_MODE --chrome"
 alias lg=lazygit
 
