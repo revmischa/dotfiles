@@ -249,13 +249,13 @@ if command -v brew >/dev/null 2>&1; then
 fi
 
 # pnpm
-export PNPM_HOME="$HOME/Library/pnpm"
-if [[ -n "$PNPM_HOME" ]]; then
-  case ":$PATH:" in
-    *":$PNPM_HOME:"*) ;;
-    *) export PATH="$PNPM_HOME:$PATH" ;;
-  esac
-fi
+#export PNPM_HOME="$HOME/Library/pnpm"
+#if [[ -n "$PNPM_HOME" ]]; then
+#  case ":$PATH:" in
+#    *":$PNPM_HOME:"*) ;;
+#    *) export PATH="$PNPM_HOME:$PATH" ;;
+#  esac
+#fi
 # pnpm end
 
 # Rust
