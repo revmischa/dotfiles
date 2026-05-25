@@ -200,6 +200,12 @@ bindkey '^[[3;3~' kill-word
 # These will be available after the plugins are loaded
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
+# Application-mode arrows (common on Linux terminals and inside tmux)
+bindkey '^[OA' history-substring-search-up
+bindkey '^[OB' history-substring-search-down
+# Shift+Up / Shift+Down
+bindkey '^[[1;2A' history-substring-search-up
+bindkey '^[[1;2B' history-substring-search-down
 bindkey '^P' history-substring-search-up
 bindkey '^N' history-substring-search-down
 
