@@ -1,13 +1,15 @@
 # Claude Code worktree helpers
-# Uses claude --worktree and --tmux for session management
-# Worktrees live at <repo>/.claude/worktrees/<name>
+# gwf/gwfc launch claude --worktree directly in the current shell
+# Worktrees live at ~/.forest/<repo>/<name> (shared with herdr; the location is
+# set for claude by ~/.claude/hooks/forest-worktree.sh and for herdr by
+# [worktrees] directory in ~/.config/herdr/config.toml)
 
 _gwt_base() {
   local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
     printf "\033[31m  not in a git repo\033[0m\n"
     return 1
   }
-  echo "$toplevel/.claude/worktrees"
+  echo "${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}"
 }
 
 _gwt_dirs() {
@@ -41,17 +43,7 @@ _gwt_session() {
     printf "\033[31m  not in a git repo\033[0m\n"
     return 1
   }
-  local repo=$(basename "$toplevel")
-  local session_name="$repo/$1"
-  local wt_path="$toplevel/.claude/worktrees/$1"
-  local claude_cmd="cd '$toplevel' && claude --dangerously-skip-permissions --worktree '$1' $2"
-  tmux new-session -d -s "$session_name" -c "$toplevel" "$SHELL -ic \"$claude_cmd\"" 2>/dev/null
-  tmux set-option -t "$session_name" default-command "cd '$wt_path' 2>/dev/null; exec $SHELL"
-  if [ -n "$TMUX" ]; then
-    tmux switch-client -t "$session_name"
-  else
-    tmux attach-session -t "$session_name"
-  fi
+  (cd "$toplevel" && claude --dangerously-skip-permissions --worktree "$1" ${2:+"$2"})
 }
 
 gwf() {
@@ -106,7 +98,7 @@ gwl() {
     return 1
   }
   local repo=$(basename "$toplevel")
-  local base="$toplevel/.claude/worktrees"
+  local base="${FOREST_DIR:-$HOME/.forest}/$repo"
   local dirs=("$base"/*(N/))
   if [ ${#dirs} -eq 0 ]; then
     printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"
@@ -159,7 +151,7 @@ gwrm() {
 
 _gwt_completions() {
   local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || return
-  local base="$toplevel/.claude/worktrees"
+  local base="${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}"
   [ -d "$base" ] || return
   compadd -- "$base"/*(N/:t)
 }
