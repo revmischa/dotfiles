@@ -141,6 +141,7 @@ install_essentials() {
             "git-delta"
             "lazygit"
             "glow"
+            "jq"
         )
 
         for package in "${packages[@]}"; do
@@ -170,6 +171,7 @@ install_essentials() {
                 "bat"
                 "lazygit"
                 "glow"
+                "jq"
             )
 
             for package in "${packages[@]}"; do
@@ -246,6 +248,26 @@ install_zsh_plugins() {
     else
         log_info "zsh-history-substring-search already installed"
     fi
+}
+
+# Install herdr (terminal agent multiplexer)
+install_herdr() {
+    if command_exists herdr; then
+        log_info "herdr already installed"
+        return
+    fi
+
+    log_info "Installing herdr..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install herdr
+    else
+        # herdr is not in apt; use the official install script (user-level)
+        if ! curl -fsSL https://herdr.dev/install.sh | sh; then
+            log_warning "Failed to install herdr. Install manually: https://herdr.dev/docs/install/"
+            return
+        fi
+    fi
+    log_success "herdr installed"
 }
 
 # Clone Neovim configuration
@@ -326,6 +348,7 @@ main() {
     install_package_manager
     install_essentials
     install_zsh_plugins
+    install_herdr
     install_neovim_config
     install_nodejs
     set_zsh_default
