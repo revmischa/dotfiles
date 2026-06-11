@@ -34,7 +34,7 @@ new_cwd = "follow"
 
 # Run lazygit in a temporary pane.
 [[keys.command]]
-key = "prefix+alt+g"
+key = "prefix+ctrl+q"
 type = "pane"
 command = "lazygit"
 
