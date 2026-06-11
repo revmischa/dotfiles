@@ -226,6 +226,16 @@ export EDITOR="nvim"
 export VISUAL="$EDITOR"
 
 # Development paths
+# Keep PATH free of duplicates (entries added later are dropped if already present).
+typeset -U path
+
+# Guarantee the system binaries are on PATH. herdr and other non-login shells
+# can spawn with a PATH that lacks /usr/bin; because the rest of this file only
+# prepends, a missing /usr/bin would never be restored and would break tools
+# that shell out to standard utilities (e.g. nvm's auto-`use` calls `tr`,
+# producing "nvm:7: command not found: tr" on every reload).
+export PATH="$PATH:/usr/bin:/bin:/usr/sbin:/sbin"
+
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/bin:$PATH"
 # macOS specific configuration
