@@ -38,6 +38,11 @@ key = "prefix+ctrl+q"
 type = "pane"
 command = "lazygit"
 
+# Indexed direct-jump bindings. ctrl+shift+1..9 jumps straight to a workspace
+# (one per worktree), the same way prefix+1..9 jumps to a tab.
+[keys.indexed]
+workspaces = "ctrl+shift"
+
 [worktrees]
 # Agent-agnostic root shared with Claude Code (see the WorktreeCreate hook at
 # ~/.claude/hooks/forest-worktree.sh). herdr lays out <root>/<repo>/<name>.
