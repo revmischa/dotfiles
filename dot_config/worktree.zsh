@@ -45,7 +45,7 @@ _gwt_ensure() {
 }
 
 _gwt_pick() {
-  local base=$(_gwt_base) || return 1
+  local base; base=$(_gwt_base) || return 1
   local dirs=("$base"/*(N/))
   [ ${#dirs} -eq 0 ] && {
     printf "\033[2m  no worktrees\033[0m\n"
@@ -167,7 +167,6 @@ gwl() {
 # Go to a worktree, creating it if missing. Inside herdr this opens (and focuses)
 # the worktree as a workspace; outside herdr it cd's the current shell.
 gwcd() {
-  local base=$(_gwt_base) || return 1
   local target="$1"
   if [ -z "$target" ]; then
     if command -v fzf >/dev/null; then
@@ -190,7 +189,7 @@ gwcd() {
 }
 
 gwrm() {
-  local base=$(_gwt_base) || return 1
+  local base; base=$(_gwt_base) || return 1
   local target="$1"
   if [ -z "$target" ] && command -v fzf >/dev/null; then
     target=$(_gwt_pick) || return 1
