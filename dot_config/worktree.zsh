@@ -4,10 +4,9 @@
 # set for claude by ~/.claude/hooks/forest-worktree.sh and for herdr by
 # [worktrees] directory in ~/.config/herdr/config.toml).
 #
-# Inside a herdr session (HERDR_ENV=1) these open a new focused tab in the
-# current workspace at the worktree path: gwf/gwfc also run claude in it, gwcd
-# leaves a plain shell. Outside herdr they fall back to launching claude in the
-# current shell / plain cd.
+# Inside a herdr session (HERDR_ENV=1) these open the worktree as a focused
+# herdr workspace: gwf/gwfc run claude in its root pane, gwcd just focuses it.
+# Outside herdr they fall back to launching claude in the current shell / plain cd.
 
 _gwt_base() {
   local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
@@ -68,20 +67,25 @@ _gwt_session() {
     return 1
   }
   if _gwt_in_herdr; then
-    # Open a new tab in the current workspace at the worktree, run claude in it.
-    local dest out pane
+    # Open the worktree as a focused herdr workspace, run claude in its root pane.
+    local dest out already pane
     dest=$(_gwt_ensure "$1") || return 1
-    out=$(herdr tab create --cwd "$dest" --label "$1" --focus 2>/dev/null) || {
-      printf "\033[31m  herdr: failed to create tab\033[0m\n"
+    out=$(herdr worktree open --path "$dest" --focus --json 2>/dev/null) || {
+      printf "\033[31m  herdr: failed to open worktree\033[0m\n"
       return 1
     }
+    already=$(printf '%s' "$out" | jq -r '.result.already_open // false')
+    if [ "$already" = "true" ]; then
+      printf "\033[2m  switched to existing\033[0m \033[1m%s\033[0m\n" "$1"
+      return 0
+    fi
     pane=$(printf '%s' "$out" | jq -r '.result.root_pane.pane_id // empty')
     [ -z "$pane" ] && {
       printf "\033[31m  herdr: no pane id in response\033[0m\n"
       return 1
     }
     herdr pane run "$pane" "claude --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}${2:+ $2}" >/dev/null &&
-      printf "\033[32m  started claude in tab\033[0m \033[1m%s\033[0m\n" "$1"
+      printf "\033[32m  started claude in\033[0m \033[1m%s\033[0m\n" "$1"
   else
     (cd "$toplevel" && claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" --worktree "$1" ${2:+"$2"})
     # Stay in the worktree after claude exits, if it was created
@@ -178,8 +182,8 @@ gwcd() {
   local dest
   dest=$(_gwt_ensure "$target") || return 1
   if _gwt_in_herdr; then
-    herdr tab create --cwd "$dest" --label "$target" --focus >/dev/null 2>&1 &&
-      printf "\033[34m  opened tab\033[0m \033[1m%s\033[0m\n" "$target"
+    herdr worktree open --path "$dest" --focus --json >/dev/null 2>&1 &&
+      printf "\033[34m  opened workspace\033[0m \033[1m%s\033[0m\n" "$target"
   else
     cd "$dest"
   fi
