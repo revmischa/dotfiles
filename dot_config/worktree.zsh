@@ -84,10 +84,10 @@ _gwt_session() {
       printf "\033[31m  herdr: no pane id in response\033[0m\n"
       return 1
     }
-    herdr pane run "$pane" "claude --dangerously-skip-permissions${2:+ $2}" >/dev/null &&
+    herdr pane run "$pane" "claude --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}${2:+ $2}" >/dev/null &&
       printf "\033[32m  started claude in\033[0m \033[1m%s\033[0m\n" "$1"
   else
-    (cd "$toplevel" && claude --dangerously-skip-permissions --worktree "$1" ${2:+"$2"})
+    (cd "$toplevel" && claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" --worktree "$1" ${2:+"$2"})
     # Stay in the worktree after claude exits, if it was created
     local dest="${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}/$1"
     [ -d "$dest" ] && cd "$dest"
