@@ -44,6 +44,9 @@ _gwt_session() {
     return 1
   }
   (cd "$toplevel" && claude --dangerously-skip-permissions --worktree "$1" ${2:+"$2"})
+  # Stay in the worktree after claude exits, if it was created
+  local dest="${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}/$1"
+  [ -d "$dest" ] && cd "$dest"
 }
 
 gwf() {
@@ -60,35 +63,6 @@ gwfc() {
     return 1
   }
   _gwt_session "$1" "--chrome"
-}
-
-# Switch to an existing worktree session, or list them if no argument is given
-gwss() {
-  local sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep '/')
-  [ -z "$sessions" ] && {
-    printf "\033[2m  no worktree sessions\033[0m\n"
-    return 1
-  }
-  local choice
-  if [ -n "$1" ]; then
-    choice=$(echo "$sessions" | grep -F "$1" | head -1)
-    [ -z "$choice" ] && {
-      printf "\033[31m  no session matching '%s'\033[0m\n" "$1"
-      return 1
-    }
-  elif command -v fzf >/dev/null; then
-    choice=$(echo "$sessions" | fzf --prompt="  " --height=~40% --reverse)
-    [ -z "$choice" ] && return 0
-  else
-    echo "$sessions"
-    printf "\033[2m  usage: gws <name>\033[0m\n"
-    return 1
-  fi
-  if [ -n "$TMUX" ]; then
-    tmux switch-client -t "$choice"
-  else
-    tmux attach-session -t "$choice"
-  fi
 }
 
 # List worktrees for the current repo with branch and status info
@@ -119,10 +93,17 @@ gwl() {
 gwcd() {
   local base=$(_gwt_base) || return 1
   if [ -n "$1" ]; then
-    [ -d "$base/$1" ] || {
-      printf "\033[31m  worktree '%s' not found\033[0m\n" "$1"
-      return 1
-    }
+    if [ ! -d "$base/$1" ]; then
+      # Create the worktree (mirrors ~/.claude/hooks/forest-worktree.sh):
+      # reuse the branch if it exists, otherwise start a new one.
+      local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+      if git -C "$toplevel" show-ref --verify --quiet "refs/heads/$1"; then
+        git -C "$toplevel" worktree add "$base/$1" "$1" || return 1
+      else
+        git -C "$toplevel" worktree add "$base/$1" -b "$1" || return 1
+      fi
+      printf "\033[32m  created\033[0m \033[1m%s\033[0m\n" "$1"
+    fi
     cd "$base/$1"
   elif command -v fzf >/dev/null; then
     local choice=$(_gwt_pick) || return 1
