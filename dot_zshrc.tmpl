@@ -309,3 +309,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+# nvm prepends the active node's bin to PATH, which shadows ~/.local/bin (where
+# native claude lives) with any npm-global install. Re-prepend after nvm loads.
+export PATH="$HOME/.local/bin:$PATH"
+
