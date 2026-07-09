@@ -306,10 +306,24 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Sourcing nvm.sh eagerly costs ~1s (nvm_auto resolves+validates the default
+# version on every shell). Instead put the default node's bin on PATH directly
+# so node/npm/npx work immediately, and lazy-load real nvm on first `nvm` call.
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+  _nvm_default=$(cat "$NVM_DIR/alias/default" 2>/dev/null)
+  for _d in "$NVM_DIR/versions/node/v${_nvm_default#v}"/bin(N) "$NVM_DIR/versions/node"/v*/bin(Nn[-1]); do
+    path=("$_d" $path); break
+  done
+  unset _nvm_default _d
+  nvm() {
+    unfunction nvm
+    source "$NVM_DIR/nvm.sh"
+    [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
+    nvm "$@"
+  }
+fi
 
-# nvm prepends the active node's bin to PATH, which shadows ~/.local/bin (where
-# native claude lives) with any npm-global install. Re-prepend after nvm loads.
+# ~/.local/bin (native claude) must win over any npm-global install in node's
+# bin dir added above. typeset -U path dedups; re-prepend to force it to front.
 export PATH="$HOME/.local/bin:$PATH"
 
