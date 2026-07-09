@@ -31,6 +31,8 @@ new_cwd = "follow"
 [keys]
 # Prefix key to enter prefix mode (default: "ctrl+b")
 # prefix = "ctrl+b"
+previous_workspace = "alt+shift+up"
+next_workspace = "alt+shift+down"
 
 # Run lazygit in a temporary pane.
 [[keys.command]]
