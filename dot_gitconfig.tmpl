@@ -2,8 +2,9 @@
 {{- /* Only include [user] section if git user is already configured */ -}}
 {{- $gitName := (output "sh" "-c" "git config --global user.name 2>/dev/null || true") | trim }}
 {{- $gitEmail := (output "sh" "-c" "git config --global user.email 2>/dev/null || true") | trim }}
+{{- $gitSigningKey := (output "sh" "-c" "git config --global user.signingkey 2>/dev/null || true") | trim }}
 
-{{- if or $gitName $gitEmail }}
+{{- if or $gitName $gitEmail $gitSigningKey }}
 [user]
 {{-   if $gitName }}
 	name = {{ $gitName | quote }}
@@ -11,6 +12,18 @@
 {{-   if $gitEmail }}
 	email = {{ $gitEmail | quote }}
 {{-   end }}
+{{-   if $gitSigningKey }}
+	signingkey = {{ $gitSigningKey | quote }}
+{{-   end }}
+{{- end }}
+
+{{- if $gitSigningKey }}
+
+[gpg]
+	format = ssh
+
+[commit]
+	gpgsign = true
 {{- end }}
 
 [core]

@@ -100,6 +100,23 @@ Then apply changes:
 chezmoi apply
 ```
 
+## Git commit signing (SSH)
+
+The git config enables SSH-based commit signing, but only when a signing key is
+set — so it never breaks commits on a machine that has no key. Keys are not
+stored in this repo. On each machine, set your key once, then apply:
+
+```bash
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+chezmoi apply ~/.gitconfig
+```
+
+`dot_gitconfig.tmpl` reads your live `user.signingkey` at apply time, so each
+machine keeps its own key. For GitHub to mark commits **Verified**, also add the
+same `.pub` as a *Signing key* at <https://github.com/settings/keys>.
+
 ## Platform Support
 
 This setup automatically detects and configures for:
