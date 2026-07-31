@@ -4,7 +4,7 @@ Check CI status for a GitHub PR and fix any failing checks until everything is g
 
 ## Usage
 
-Provide a PR URL or number as the argument: `/ci 719` or `/ci https://github.com/METR/inspect-action/pull/719`
+Provide a PR URL or number as the argument: `/ci 719` or `/ci https://github.com/<owner>/<repo>/pull/719`
 
 ## Instructions
 
