@@ -43,9 +43,7 @@ renamed = "📛×${count} "
 deleted = "🗑️ ×${count} "
 
 [nodejs]
-symbol = "⬢ "
-style = "bold green"
-format = "via [$symbol($version )]($style)"
+disabled = true
 
 [python]
 symbol = "🐍 "
