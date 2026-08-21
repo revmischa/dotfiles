@@ -142,6 +142,8 @@ install_essentials() {
             "lazygit"
             "glow"
             "jq"
+            "uv"
+            "gh"
         )
 
         for package in "${packages[@]}"; do
@@ -172,6 +174,7 @@ install_essentials() {
                 "lazygit"
                 "glow"
                 "jq"
+                "gh"
             )
 
             for package in "${packages[@]}"; do
@@ -198,6 +201,13 @@ install_essentials() {
         fi
 
         # Manual installation of modern tools
+        if ! command_exists uv; then
+            log_info "Installing uv..."
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            export PATH="$HOME/.local/bin:$PATH"
+            log_success "uv installed"
+        fi
+
         if ! command_exists starship; then
             log_info "Installing Starship manually..."
             # Create local bin directory
