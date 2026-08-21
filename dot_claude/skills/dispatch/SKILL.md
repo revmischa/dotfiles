@@ -43,7 +43,7 @@ ask — a worker with a vague brief burns a whole session.
 
 ## 2. Create the worktree
 
-Base on `origin/main` unless the work sits on top of an existing PR branch (then base on
+Base on latest `origin/main` unless the work sits on top of an existing PR branch (then base on
 that branch, and say so).
 
 ```bash
@@ -88,6 +88,9 @@ herdr pane run <root-pane> "claude --permission-mode ${CLAUDE_PERMISSION_MODE:-a
 herdr wait agent-status <root-pane> --status idle --timeout 60000
 herdr pane run <root-pane> "<brief>"
 ```
+
+When you start claude, you should default to using the Fable model, or Opus 5 fast mode is acceptable for trivial tasks. 
+If cc-fable executable is present, you must use it to use Fable. If the shell function `cyber` is available, you must use it for cybersecurity-related/CVP tasks. If not present, you can use the default claude executable.
 
 The brief is one message and must stand alone — the worker has none of this
 conversation. Include:
