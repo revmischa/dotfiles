@@ -53,6 +53,12 @@ herdr worktree create --branch "$BRANCH" --base origin/main --no-focus --json
 Read the **workspace id**, **root pane id**, and **path** out of the JSON. Never guess
 IDs — re-read them after every split.
 
+Branch names contain slashes, so keep a filename-safe slug for the temp files below:
+
+```bash
+SLUG="${BRANCH//\//-}"
+```
+
 Then enforce the standing rule that new branches don't track `origin/main`:
 
 ```bash
@@ -74,23 +80,77 @@ When it does apply, one pane per server, to the right of the worker, labelled:
 ```bash
 herdr pane split <root-pane> --direction right --no-focus   # -> <srv-top>
 herdr pane rename <srv-top> "server"
-herdr pane run <srv-top> "cd $WT && <the repo's documented command> 2>&1 | tee -a /tmp/dispatch-$BRANCH.log"
+herdr pane run <srv-top> "cd $WT && <the repo's documented command> 2>&1 | tee -a /tmp/dispatch-$SLUG.log"
 ```
 
 Split again `--direction down` from `<srv-top>` for a second server. The `tee` is the
 point: it gives you a file to grep later without needing the pane.
 
+`pane run` submits correctly here because these panes are at a shell prompt. Prompts
+typed into an agent's TUI are the exception — see step 4.
+
 ## 4. Start the worker
+
+### Pick the executable FIRST — it decides the command you run
+
+Default to the Fable model; Opus 5 fast mode is acceptable for trivial tasks. Check what
+is actually available before launching, don't assume:
+
+```bash
+command -v cc-fable            # Fable launcher
+zsh -ic 'whence -w cyber'      # `cyber` is a shell FUNCTION, so `command -v` won't find it
+```
+
+- **cybersecurity / CVP task and `cyber` is available → you MUST use `cyber`.** CVP work
+  is cybersecurity work; treat any mention of CVP as the trigger.
+- Otherwise, **`cc-fable` present → you MUST use it** (that's how you get Fable).
+- Only if neither is present, fall back to plain `claude`.
+
+Getting this wrong is silent — the worker runs fine on the wrong model and nothing warns
+you. Decide before you type the launch line.
 
 ```bash
 herdr pane rename <root-pane> "claude"
-herdr pane run <root-pane> "claude --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}"
+herdr pane run <root-pane> "<cyber|cc-fable|claude> --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}"
 herdr wait agent-status <root-pane> --status idle --timeout 60000
-herdr pane run <root-pane> "<brief>"
 ```
 
-When you start claude, you should default to using the Fable model, or Opus 5 fast mode is acceptable for trivial tasks. 
-If cc-fable executable is present, you must use it to use Fable. If the shell function `cyber` is available, you must use it for cybersecurity-related/CVP tasks. If not present, you can use the default claude executable.
+**Put the brief in a file and point the worker at it.** Do not paste a long brief into
+the pane — see the gotchas below.
+
+```bash
+cat > "/tmp/dispatch-brief-$SLUG.md" <<'BRIEF'
+<the whole brief, markdown, heredoc-quoted so nothing expands>
+BRIEF
+
+herdr pane run <root-pane> "Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, following it exactly."
+herdr pane read <root-pane> --source visible --lines 6          # the line is in the input buffer, unsubmitted
+herdr pane send-keys <root-pane> enter                          # this is what actually submits it
+herdr wait agent-status <root-pane> --status working --timeout 20000
+```
+
+If the `wait` times out, the prompt never went in. Re-read the pane: text still sitting
+at the `❯` means send another `enter`; an empty buffer means the text was dropped, so
+send it again from `pane run`.
+
+### herdr gotchas
+
+- **`herdr pane run` does not submit into an agent's TUI.** Its help says "command text
+  plus Enter", and that holds at a shell prompt — which is why launching the agent with
+  it works. Text typed into Claude's own input box just sits there. Always follow with
+  `herdr pane send-keys <pane> enter`.
+- **Verify before you submit, and verify after.** Fire-and-forget loses briefs silently:
+  a `pane run` immediately after the agent first reaches `idle` can be dropped entirely,
+  leaving an empty buffer and no error. `pane read` on both sides costs nothing.
+- **Long multi-line text arrives as several separate `[Pasted text #N]` chunks**, which
+  is unverifiable at a glance and concatenates with whatever a failed earlier attempt
+  left behind. The brief-in-a-file trick sidesteps all of it: one short line, one
+  readable buffer. It also survives a worker that gets compacted or restarted — the
+  brief is still on disk.
+- **Clear a dirty buffer** with `herdr pane send-keys <pane> ctrl+u` before retrying.
+- `herdr agent send <target> <text>` is the documented "type literal text, no Enter"
+  primitive, and `herdr agent ...` accepts agent names rather than pane ids. Either
+  works; both still need the explicit `enter`.
 
 The brief is one message and must stand alone — the worker has none of this
 conversation. Include:
@@ -102,19 +162,32 @@ conversation. Include:
   standing rule, restate it because the worker won't infer it.
 - **Environment**, only if step 3 ran: the URL, credentials, "servers run in sibling
   herdr panes labelled 'server'; restart one by re-running its command there", and the
-  `/tmp/dispatch-<branch>.log` path.
+  `/tmp/dispatch-<slug>.log` path.
 - **Hand-off**: "open a **draft** PR when the work is green, add copilot as a reviewer,
   then stop" — or "stop before pushing and report back", if the user prefers to look first.
   Ask which if you don't know.
 
 ## 5. Report
 
-Tell the user: branch, workspace id, what the worker was told to do, and where it ends
-(draft PR vs. stop-and-report). Offer to jump over:
+Tell the user: branch, workspace id, what the worker was told to do, which executable it
+is running on (`cyber` / `cc-fable` / `claude`), and where it ends (draft PR vs.
+stop-and-report).
+
+**Never identify a PR, issue, or ticket by bare number.** Mischa runs many of these in
+parallel across repos and does not hold the number → content mapping in his head. Give
+repo plus what the change actually is on first mention — "METR/devpod, the wrong-AWS-
+account VPC error" — and let the number ride along as a reference, not as the name. A
+short name is fine on later mentions in the same message. This matters most in
+multi-worker status summaries, where several numbers appear at once.
+
+Offer to jump over:
 
 ```bash
 herdr workspace focus <workspace-id>
 ```
+
+You are not finished at the report. When the worker lands, relay its result and then
+**tear the workspace down in the same turn** — see Teardown.
 
 ## Checking on it
 
@@ -132,12 +205,56 @@ Lost the pane ids? `herdr pane list --workspace <ws>` and match on the labels.
 
 ## Teardown
 
+**Tear down automatically once the work is done and safely landed.** Don't leave dead
+workspaces for the user to notice and ask about — relay the worker's result, then clean
+up in the same turn and say you did.
+
+"Done and safely landed" means all of these, checked and not assumed:
+
+```bash
+git -C "$WT" status --porcelain          # empty — nothing uncommitted
+git -C "$WT" log --oneline @{u}..HEAD    # empty — nothing unpushed
+                                         # and the PR is merged, or the branch is pushed
+                                         # and the user has seen the report
+```
+
+If any check fails, **stop and tell the user what's unlanded** instead of deleting it.
+Same if the worker ended `blocked`, errored, or you never relayed its findings — the
+pane is the only copy of that context. Also leave it up if the user has typed something
+into the pane that hasn't been submitted yet.
+
+For a review-only dispatch there is nothing to land: once you've relayed the verdict,
+tear down.
+
 ```bash
 herdr workspace close <workspace-id>    # stops panes, servers, and the agent
-git -C <main-checkout> worktree remove ~/.forest/<repo>/<branch>
-git -C <main-checkout> branch -d <branch>    # -D only if the user confirms it's abandoned
+git -C <main-checkout> worktree remove ~/.forest/<repo>/<slug>
+git -C <main-checkout> branch -d <branch>
 ```
 
 Close the workspace **first** — panes holding the checkout open will defeat
-`worktree remove` and the directory reappears. Confirm before deleting anything with
-uncommitted changes (`git -C <wt> status --porcelain`), and never do this to a main checkout.
+`worktree remove` and the directory reappears. Never do this to a main checkout.
+
+Notes from doing it for real:
+
+- `branch -d` **succeeds on a squash-merged branch** as long as the local branch matches
+  its own upstream — it warns "merged to refs/remotes/origin/<branch>, but not yet merged
+  to HEAD" and deletes. You rarely need `-D`; if `-d` genuinely refuses, that means work
+  exists nowhere else, so stop and ask rather than reaching for `-D`.
+- Before deleting a squash-merged branch, confirm the content actually landed:
+  `git diff --quiet origin/main <branch> -- <the files it touched>`.
+- `git stash list` inside a linked worktree shows the **whole repo's** stashes, not that
+  worktree's. A stash there is not a reason to keep the worktree, and removing the
+  worktree won't touch it.
+- Leave the `/tmp/dispatch-brief-<slug>.md` file; /tmp cleans itself and it's the record
+  of what the worker was told.
+
+## Editing this skill
+
+This file is **managed by chezmoi**. The source of truth is
+`~/.local/share/chezmoi/dot_claude/skills/dispatch/SKILL.md`, not the applied copy at
+`~/.claude/skills/dispatch/SKILL.md`. Edit the source and run `chezmoi apply`; edits made
+directly to the target get clobbered, and worse, the target can be *stale* relative to
+the source, so reading it can hide instructions that actually exist. Check with
+`chezmoi status ~/.claude/skills/dispatch/SKILL.md` before assuming the applied copy is
+current.
