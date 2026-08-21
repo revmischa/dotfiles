@@ -89,8 +89,14 @@
 [github]
 	user = revmischa
 
+{{- /* Rewrite HTTPS to SSH only where an SSH key is a given. On a remote box
+       (devbox, CI, cloud-init) there is often no key and no forwarded agent,
+       and this rewrite turns every public HTTPS clone into a permission
+       denied -- e.g. antidote in .zshrc. */}}
+{{- if .isMacOS }}
 [url "git@github.com:"]
 	insteadOf = https://github.com/
+{{- end }}
 
 [merge "npm-merge-driver"]
 	name = automatically merge npm lockfiles
