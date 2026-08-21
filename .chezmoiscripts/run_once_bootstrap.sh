@@ -119,6 +119,50 @@ install_package_manager() {
     fi
 }
 
+# Install a goreleaser-style GitHub release tarball into ~/.local/bin (Linux only).
+# ponytail: unauthenticated GitHub API, 60 req/hr — pin a version here if that ever bites.
+install_github_tarball() {
+    local bin="$1" repo="$2" arch url tmp found
+
+    if command_exists "$bin"; then
+        log_info "$bin already installed"
+        return
+    fi
+
+    case "$(uname -m)" in
+        x86_64) arch="x86_64" ;;
+        aarch64 | arm64) arch="arm64" ;;
+        *)
+            log_warning "No $bin build for $(uname -m)"
+            return
+            ;;
+    esac
+
+    url=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" |
+        grep -io "https://[^\"]*linux_${arch}\.tar\.gz" | head -1)
+    if [[ -z "$url" ]]; then
+        log_warning "Could not find a $bin release for Linux_${arch}"
+        return
+    fi
+
+    log_info "Installing $bin from $url"
+    tmp=$(mktemp -d)
+    if curl -fsSL "$url" | tar -xz -C "$tmp"; then
+        found=$(find "$tmp" -type f -name "$bin" | head -1)
+        if [[ -n "$found" ]]; then
+            mkdir -p "$HOME/.local/bin"
+            install -m 755 "$found" "$HOME/.local/bin/$bin"
+            export PATH="$HOME/.local/bin:$PATH"
+            log_success "$bin installed"
+        else
+            log_warning "No $bin binary inside $url"
+        fi
+    else
+        log_warning "Failed to download $bin"
+    fi
+    rm -rf "$tmp"
+}
+
 # Install essential packages
 install_essentials() {
     log_info "Installing essential packages..."
@@ -166,13 +210,11 @@ install_essentials() {
                 "neovim"
                 "build-essential"
                 "unzip"
-                "zooxide"
+                "zoxide"
                 "eza"
                 "ripgrep"
                 "fzf"
                 "bat"
-                "lazygit"
-                "glow"
                 "jq"
                 "gh"
             )
@@ -201,6 +243,9 @@ install_essentials() {
         fi
 
         # Manual installation of modern tools
+        install_github_tarball lazygit jesseduffield/lazygit
+        install_github_tarball glow charmbracelet/glow
+
         if ! command_exists uv; then
             log_info "Installing uv..."
             curl -LsSf https://astral.sh/uv/install.sh | sh
