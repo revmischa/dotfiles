@@ -209,6 +209,12 @@ install_essentials() {
                 "zsh"
                 "neovim"
                 "build-essential"
+                # nvim plugin builds: treesitter parsers, telescope-fzf-native, Mason servers
+                "cmake"
+                "pkg-config"
+                "python3-dev"
+                "python3-venv"
+                "python3-pip"
                 "unzip"
                 "zoxide"
                 "eza"
