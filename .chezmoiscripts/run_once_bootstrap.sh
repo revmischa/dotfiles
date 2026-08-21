@@ -119,6 +119,51 @@ install_package_manager() {
     fi
 }
 
+# Distro neovim is too old for the nvim config (Debian trixie ships 0.10.4), so take
+# the upstream static build. Can't reuse install_github_tarball: neovim's assets are
+# nvim-linux-<arch>.tar.gz (hyphen, not the linux_<arch> that helper greps for), and
+# nvim needs its share/nvim/runtime tree, not just the binary.
+NVIM_MIN_VERSION="0.11"
+install_neovim() {
+    local arch url tmp have
+    if command_exists nvim; then
+        have=$(nvim --version | sed -n '1s/^NVIM v\([0-9][0-9.]*\).*/\1/p')
+        if [[ -n "$have" ]] &&
+            [[ "$(printf '%s\n%s\n' "$NVIM_MIN_VERSION" "$have" | sort -V | head -1)" == "$NVIM_MIN_VERSION" ]]; then
+            log_info "nvim $have already installed"
+            return
+        fi
+        log_info "nvim ${have:-unknown} is older than $NVIM_MIN_VERSION, upgrading"
+    fi
+
+    case "$(uname -m)" in
+        x86_64) arch="x86_64" ;;
+        aarch64 | arm64) arch="arm64" ;;
+        *)
+            log_warning "No neovim build for $(uname -m)"
+            return
+            ;;
+    esac
+
+    url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${arch}.tar.gz"
+    log_info "Installing neovim from $url"
+    tmp=$(mktemp -d)
+    # Tarball is nvim-linux-<arch>/{bin,share}; strip that prefix so it merges into
+    # ~/.local and nvim finds ../share/nvim/runtime relative to its own binary.
+    if curl -fsSL "$url" | tar -xz -C "$tmp" --strip-components=1; then
+        mkdir -p "$HOME/.local"
+        cp -a "$tmp"/. "$HOME/.local/"
+        export PATH="$HOME/.local/bin:$PATH"
+        log_success "neovim installed: $("$HOME/.local/bin/nvim" --version | head -1)"
+    else
+        log_warning "Failed to download neovim; falling back to the distro package"
+        if can_install_packages && command_exists apt-get; then
+            safe_sudo apt-get install -y neovim || log_warning "apt neovim failed too"
+        fi
+    fi
+    rm -rf "$tmp"
+}
+
 # Install a goreleaser-style GitHub release tarball into ~/.local/bin (Linux only).
 # ponytail: unauthenticated GitHub API, 60 req/hr — pin a version here if that ever bites.
 install_github_tarball() {
@@ -207,7 +252,6 @@ install_essentials() {
                 "curl"
                 "wget"
                 "zsh"
-                "neovim"
                 "build-essential"
                 # nvim plugin builds: treesitter parsers, telescope-fzf-native, Mason servers
                 "cmake"
@@ -249,6 +293,7 @@ install_essentials() {
         fi
 
         # Manual installation of modern tools
+        install_neovim
         install_github_tarball lazygit jesseduffield/lazygit
         install_github_tarball glow charmbracelet/glow
 
