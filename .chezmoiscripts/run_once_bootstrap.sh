@@ -203,15 +203,9 @@ install_essentials() {
             # Create local bin directory
             mkdir -p "$HOME/.local/bin"
 
-            # Install starship to user directory
-            if can_install_packages; then
-                curl -sS https://starship.rs/install.sh | sh -s -- --yes
-            else
-                log_info "Installing Starship to user directory..."
-                curl -sS https://starship.rs/install.sh | sh -s -- --bin-dir="$HOME/.local/bin" --yes
-                # Ensure .local/bin is in PATH
-                export PATH="$HOME/.local/bin:$PATH"
-            fi
+            # ponytail: always user-level, so the installer never asks for sudo
+            curl -sS https://starship.rs/install.sh | sh -s -- --bin-dir="$HOME/.local/bin" --yes
+            export PATH="$HOME/.local/bin:$PATH"
             log_success "Starship installed"
         fi
     fi
