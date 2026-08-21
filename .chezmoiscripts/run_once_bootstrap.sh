@@ -264,6 +264,23 @@ install_herdr() {
     log_success "herdr installed"
 }
 
+# Install Claude Code CLI
+install_claude_code() {
+    if command_exists claude; then
+        log_info "Claude Code already installed"
+        return
+    fi
+
+    log_info "Installing Claude Code..."
+    # ponytail: the official installer is user-level (~/.local/bin) on both macOS and Linux
+    if curl -fsSL https://claude.ai/install.sh | bash; then
+        export PATH="$HOME/.local/bin:$PATH"
+        log_success "Claude Code installed"
+    else
+        log_warning "Failed to install Claude Code. Install manually: https://claude.ai/install.sh"
+    fi
+}
+
 # Clone Neovim configuration
 install_neovim_config() {
     local nvim_config_dir="$HOME/.config/nvim"
@@ -343,6 +360,7 @@ main() {
     install_essentials
     install_zsh_plugins
     install_herdr
+    install_claude_code
     install_neovim_config
     install_nodejs
     set_zsh_default
