@@ -279,7 +279,16 @@ fi
 
 # fuzzy finder
 if command -v fzf >/dev/null 2>&1; then
-  source <(fzf --zsh)
+  # --zsh arrived in fzf 0.48; older distro packages ship these files instead
+  if fzf_init=$(fzf --zsh 2>/dev/null); then
+    eval "$fzf_init"
+  else
+    for f in /usr/share/doc/fzf/examples/{key-bindings,completion}.zsh \
+      /usr/share/fzf/{key-bindings,completion}.zsh; do
+      [[ -r $f ]] && source "$f"
+    done
+  fi
+  unset fzf_init f
 fi
 
 # Python virtual environments - lazy load
