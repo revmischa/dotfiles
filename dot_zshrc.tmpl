@@ -336,3 +336,21 @@ fi
 # bin dir added above. typeset -U path dedups; re-prepend to force it to front.
 export PATH="$HOME/.local/bin:$PATH"
 
+
+# The herdr skill is generated from `herdr --skill`, so it goes stale whenever herdr is
+# upgraded -- by brew, by `herdr update`, or by hand. chezmoi apply regenerates it, but
+# that isn't part of any upgrade path, so refresh it here instead. The common case costs
+# nothing: ${commands[...]} is a hash lookup and -nt is a builtin, so no subprocess runs
+# unless the binary is actually newer than the skill.
+() {
+  local skill="$HOME/.claude/skills/herdr/SKILL.md" bin=${commands[herdr]} tmp
+  # return 0, not bare return: a non-zero $? here shows as an error in the first prompt
+  [[ -n $bin && ( ! -e $skill || $bin -nt $skill ) ]] || return 0
+  tmp="$skill.new"
+  mkdir -p "${skill:h}"
+  if herdr --skill >"$tmp" 2>/dev/null && [[ -s $tmp ]]; then
+    mv "$tmp" "$skill"
+  else
+    rm -f "$tmp"
+  fi
+}
