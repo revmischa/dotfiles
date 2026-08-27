@@ -157,9 +157,11 @@ confirmation that the brief landed.
   line referencing a file is verifiable at a glance, and it survives a worker that gets
   compacted or restarted.
 - **Clear a dirty buffer** with `herdr agent send-keys <pane> ctrl+u` before retrying.
-- **`herdr --skill` is the authority on the CLI**, not this file and not memory. Read it
-  when something here doesn't match the installed binary; `herdr <group>` (e.g. `herdr
-  agent`) prints that group's real syntax.
+- **The `herdr` skill is the authority on the CLI**, not this file and not memory. It is
+  generated straight from the installed binary (`herdr --skill`), so it can't drift. Read
+  it when something here doesn't match reality, or run `herdr <group>` (e.g. `herdr
+  agent`) for that group's real syntax. Unknown flags are rejected outright, so a command
+  copied from memory that "looks right" will simply fail.
 
 The brief is one message and must stand alone — the worker has none of this
 conversation. Include:
