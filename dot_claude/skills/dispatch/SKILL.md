@@ -47,7 +47,7 @@ Base on latest `origin/main` unless the work sits on top of an existing PR branc
 that branch, and say so).
 
 ```bash
-herdr worktree create --branch "$BRANCH" --base origin/main --no-focus --json
+herdr worktree create --branch "$BRANCH" --base origin/main --no-focus
 ```
 
 Read the **workspace id**, **root pane id**, and **path** out of the JSON. Never guess
@@ -112,7 +112,7 @@ you. Decide before you type the launch line.
 ```bash
 herdr pane rename <root-pane> "claude"
 herdr pane run <root-pane> "<cyber|cc-fable|claude> --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}"
-herdr wait agent-status <root-pane> --status idle --timeout 60000
+herdr agent wait <root-pane> --until idle --timeout 60000
 ```
 
 **Put the brief in a file and point the worker at it.** Do not paste a long brief into
@@ -123,34 +123,43 @@ cat > "/tmp/dispatch-brief-$SLUG.md" <<'BRIEF'
 <the whole brief, markdown, heredoc-quoted so nothing expands>
 BRIEF
 
-herdr pane run <root-pane> "Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, following it exactly."
-herdr pane read <root-pane> --source visible --lines 6          # the line is in the input buffer, unsubmitted
-herdr pane send-keys <root-pane> enter                          # this is what actually submits it
-herdr wait agent-status <root-pane> --status working --timeout 20000
+herdr agent prompt <root-pane> \
+  "Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, following it exactly." \
+  --wait --until working --until blocked --timeout 20000
 ```
 
-If the `wait` times out, the prompt never went in. Re-read the pane: text still sitting
-at the `❯` means send another `enter`; an empty buffer means the text was dropped, so
-send it again from `pane run`.
+`agent prompt` is the primitive built for this: it respects the pane's bracketed-paste
+mode, sends the text *and* Enter, and refuses to submit into an agent that is already at
+an approval dialog. It replaces the old `pane run` + `send-keys enter` + re-read dance.
+
+Two failure modes worth recognizing, both loud rather than silent:
+
+- `agent_blocked` — the worker is sitting on a permission prompt. `agent read` it, relay
+  the question, don't answer on the user's behalf.
+- `agent_prompt_stalled` — accepted but nothing moved within 5s. Read the pane before
+  resending; a second prompt on top of a live one concatenates.
+
+`--until working --until blocked` is deliberate: plain `--wait` settles on `idle`/`done`,
+which for a real dispatch means blocking until the whole job is finished. We only want
+confirmation that the brief landed.
 
 ### herdr gotchas
 
-- **`herdr pane run` does not submit into an agent's TUI.** Its help says "command text
-  plus Enter", and that holds at a shell prompt — which is why launching the agent with
-  it works. Text typed into Claude's own input box just sits there. Always follow with
-  `herdr pane send-keys <pane> enter`.
-- **Verify before you submit, and verify after.** Fire-and-forget loses briefs silently:
-  a `pane run` immediately after the agent first reaches `idle` can be dropped entirely,
-  leaving an empty buffer and no error. `pane read` on both sides costs nothing.
-- **Long multi-line text arrives as several separate `[Pasted text #N]` chunks**, which
-  is unverifiable at a glance and concatenates with whatever a failed earlier attempt
-  left behind. The brief-in-a-file trick sidesteps all of it: one short line, one
-  readable buffer. It also survives a worker that gets compacted or restarted — the
-  brief is still on disk.
-- **Clear a dirty buffer** with `herdr pane send-keys <pane> ctrl+u` before retrying.
-- `herdr agent send <target> <text>` is the documented "type literal text, no Enter"
-  primitive, and `herdr agent ...` accepts agent names rather than pane ids. Either
-  works; both still need the explicit `enter`.
+- **`herdr pane run` is for shell prompts, `herdr agent prompt` is for agent TUIs.** Both
+  claim to send Enter; only `pane run` at a shell prompt actually submits. Text sent with
+  `pane run` into Claude's input box just sits there unsubmitted.
+- **Don't reach for `herdr agent start`.** It looks like the right tool, but it only
+  launches each kind's *canonical executable* — `--kind claude` runs `claude`. `cyber` is
+  a shell function and `cc-fable` is a wrapper script, so neither is reachable that way.
+  Launching with `pane run` then targeting the pane keeps one path for all three.
+- **Keep the brief in a file.** Long multi-line text arrives as several `[Pasted text #N]`
+  chunks and concatenates with whatever a failed earlier attempt left behind. One short
+  line referencing a file is verifiable at a glance, and it survives a worker that gets
+  compacted or restarted.
+- **Clear a dirty buffer** with `herdr agent send-keys <pane> ctrl+u` before retrying.
+- **`herdr --skill` is the authority on the CLI**, not this file and not memory. Read it
+  when something here doesn't match the installed binary; `herdr <group>` (e.g. `herdr
+  agent`) prints that group's real syntax.
 
 The brief is one message and must stand alone — the worker has none of this
 conversation. Include:
@@ -194,7 +203,7 @@ You are not finished at the report. When the worker lands, relay its result and 
 Don't busy-wait:
 
 ```bash
-herdr wait agent-status <pane> --status done --timeout 600000
+herdr agent wait <pane> --until done --until blocked --timeout 600000
 herdr pane read <pane> --source recent-unwrapped --lines 120
 ```
 
