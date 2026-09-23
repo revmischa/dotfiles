@@ -130,11 +130,11 @@ gwl() {
         | select(.is_linked_worktree == true)
         | [ .path, .branch, (if .open_workspace_id then "1" else "0" end) ]
         | @tsv' |
-        while IFS=$'\t' read -r path branch open; do
-          local name="${path##*/}"
-          local short=$(git -C "$path" log -1 --format="%s" 2>/dev/null)
+        while IFS=$'\t' read -r wt branch open; do
+          local name="${wt##*/}"
+          local short=$(git -C "$wt" log -1 --format="%s" 2>/dev/null)
           local dirty=""
-          [ -n "$(git -C "$path" status --porcelain 2>/dev/null)" ] && dirty="\033[33m*\033[0m"
+          [ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ] && dirty="\033[33m*\033[0m"
           local mark="  "
           [ "$open" = "1" ] && mark="\033[35m●\033[0m "
           printf "  %b\033[32m%-20s\033[0m \033[36m%-30s\033[0m \033[2m%.40s\033[0m %b\n" \
