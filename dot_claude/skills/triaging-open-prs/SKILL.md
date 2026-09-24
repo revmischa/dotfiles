@@ -37,6 +37,7 @@ gh api graphql -f query='query{repository(owner:"OWNER",name:"REPO"){pullRequest
 |-------|--------|--------|
 | APPROVED + CLEAN + MERGEABLE | ready | verify not-redundant + CI green → merge |
 | APPROVED + CONFLICTING | rebase-then-merge | rebase, force-push, merge |
+| any of MY PRs + CONFLICTING | rebase now | standing rule (2026-09-02): rebase without asking, scratch worktree, `--force-with-lease` |
 | MERGEABLE + CHANGES_REQUESTED | address-review | fix items, resolve threads, re-request |
 | MERGEABLE + REVIEW_REQUIRED | needs-reviewer | request a reviewer (confirm who) |
 | CONFLICTING/DIRTY | rebase | rebase onto main, regenerate locks |
