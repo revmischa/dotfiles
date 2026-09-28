@@ -1,0 +1,6 @@
+{{ include "dot_agents/AGENTS.md" -}}
+{{- $local := joinPath .chezmoi.homeDir ".agents" "AGENTS.local.md" }}
+{{- if stat $local }}
+
+{{ include $local }}
+{{- end }}
