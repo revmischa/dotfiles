@@ -93,21 +93,17 @@ typed into an agent's TUI are the exception — see step 4.
 
 ### Pick the executable FIRST — it decides the command you run
 
-Default to the Fable model; Opus 5 fast mode is acceptable for trivial tasks. Check what
+Default to the Fable 5.1 model; Opus 5[1m] fast mode is acceptable for trivial tasks. Check what
 is actually available before launching, don't assume:
 
 ```bash
-command -v cc-fable            # Fable launcher
 zsh -ic 'whence -w cyber'      # `cyber` is a shell FUNCTION, so `command -v` won't find it
 ```
 
-- **cybersecurity / CVP task and `cyber` is available → you MUST use `cyber`.** CVP work
-  is cybersecurity work; treat any mention of CVP as the trigger.
-- Otherwise, **`cc-fable` present → you MUST use it** (that's how you get Fable).
-- Only if neither is present, fall back to plain `claude`.
+- **CVP task requested and `cyber` is available → you MUST use `cyber`.** CVP work
+  is cybersecurity work; treat any mention of CVP as the trigger. Do not automatically choose it
+  without explicit user instruction. If the user says "use cyber" and it's not available, stop and ask.
 
-Getting this wrong is silent — the worker runs fine on the wrong model and nothing warns
-you. Decide before you type the launch line.
 
 ```bash
 herdr pane rename <root-pane> "claude"
