@@ -14,6 +14,17 @@ happen and hand it off:
 
 Keep the user's focus where it is (`--no-focus` throughout) until the last step.
 
+## Who does what
+
+The herdr window this runs in is long-lived and shared across many dispatches, so keep its
+context small. **Main** does only step 0, collects the two answers only the user can give,
+launches one setup subagent, and relays its report. **The setup subagent** does steps 1–4:
+fetches the ticket, names the branch, creates the worktree, splits server panes, writes the
+brief, starts the worker. Ticket bodies, `herdr` JSON, and pane output never enter main.
+Checking on the worker later is also a subagent.
+
+Main keeps exactly four facts per dispatch: branch, workspace id, root pane id, brief path.
+
 ## 0. Preconditions
 
 ```bash
@@ -24,6 +35,58 @@ If that fails, say you're not running inside herdr and stop. Worktrees land at
 `~/.forest/<repo>/<name>` — shared between herdr (`[worktrees] directory` in
 `~/.config/herdr/config.toml`) and Claude Code (`~/.claude/hooks/forest-worktree.sh`).
 Let herdr choose the path; don't pass `--path`.
+
+## 0b. Ask the user what only they can answer
+
+Before launching anything, settle these if the conversation hasn't already:
+
+- **Hand-off**: "open a draft PR when green, add copilot, then stop" or "stop before pushing
+  and report back".
+- **Executable**: plain `claude` unless the user asked for `cyber` (see step 4).
+- **Base**: `origin/main` unless the work sits on an existing PR branch.
+
+Don't ask about the branch name; the subagent picks it and reports it.
+
+## 0c. Launch the setup subagent
+
+One `Agent` call, `subagent_type: general-purpose`, **not** `fork` — a fork re-reads this whole
+window, which is the cost being avoided. Everything the subagent needs must be in the prompt,
+the same discipline the worker brief already demands:
+
+```
+Invoke the `dispatch` skill and carry out its "Setup (subagent)" section, steps 1–4, then
+return the report in exactly the format that section specifies. Inputs:
+
+- Ticket: <Linear ID / URL, GitHub issue URL, or the user's description verbatim>
+- Repo / main checkout: <path>
+- Base: <origin/main | <pr-branch>>
+- Scope notes from the user, verbatim: <...>
+- Hand-off: <draft PR + copilot, then stop | stop before pushing and report>
+- Executable: <claude | cyber>
+- Dev servers: <"none" | "if the repo documents them">
+
+You are inside herdr (HERDR_ENV is set). Do not ask questions; if the ticket is too vague
+to brief a worker, do steps 1–2 only and say so in the report.
+```
+
+The subagent returns this, and nothing longer:
+
+```
+branch:     fix/sen-193-k8s-429-retry
+workspace:  <id>
+root pane:  <id>
+brief:      /tmp/dispatch-brief-<slug>.md
+executable: claude
+task:       <one line: repo plus what the change actually is>
+guessed:    <anything it had to decide alone, or "nothing">
+```
+
+Relay it per step 5. If `guessed` is non-empty, surface it before the worker gets far.
+
+# Setup (subagent)
+
+Steps 1–4 are executed by the setup subagent with the inputs above. A coordinator reading
+this section is in the wrong place.
 
 ## 1. Resolve the ticket, then the branch name
 
@@ -38,8 +101,9 @@ Linear ID lowercased inline when there is one:
 fix/sen-193-k8s-429-retry     feat/sandbox-runtime-class
 ```
 
-Confirm the branch name with the user before creating anything. If the ticket is vague,
-ask — a worker with a vague brief burns a whole session.
+Don't stop to confirm the branch name; report it. If the ticket is too vague to write a
+brief a worker could act on, stop after step 2 and say exactly what is missing in the
+report — a worker with a vague brief burns a whole session.
 
 ## 2. Create the worktree
 
@@ -174,11 +238,13 @@ conversation. Include:
   then stop" — or "stop before pushing and report back", if the user prefers to look first.
   Ask which if you don't know.
 
+# Coordinator, continued
+
 ## 5. Report
 
-Tell the user: branch, workspace id, what the worker was told to do, which executable it
-is running on (`cyber` / `cc-fable` / `claude`), and where it ends (draft PR vs.
-stop-and-report).
+Relay the subagent's report to the user: branch, workspace id, what the worker was told
+to do (the `task` line), which executable it is running on, and where it ends (draft PR
+vs. stop-and-report). Keep the four facts; drop the rest.
 
 **Never identify a PR, issue, or ticket by bare number.** Mischa runs many of these in
 parallel across repos and does not hold the number → content mapping in his head. Give
@@ -198,15 +264,18 @@ You are not finished at the report. When the worker lands, relay its result and 
 
 ## Checking on it
 
-Don't busy-wait:
+Don't busy-wait, and don't read the pane into main — 120 lines of worker output per poll
+is exactly the bloat this layout avoids. Send a general-purpose subagent:
 
-```bash
-herdr agent wait <pane> --until done --until blocked --timeout 600000
-herdr pane read <pane> --source recent-unwrapped --lines 120
+```
+Inside herdr, run `herdr agent wait <pane> --until done --until blocked --timeout 600000`,
+then `herdr pane read <pane> --source recent-unwrapped --lines 120`. Return only:
+state (done | blocked | errored), a three-line summary of what the worker did and where
+it ended (PR URL if any), and, if blocked, the exact question it is waiting on, verbatim.
 ```
 
-`done` and `idle` both mean finished. `blocked` means it needs input — read the pane and
-relay the actual question to the user; don't answer on their behalf unless it's trivial.
+`done` and `idle` both mean finished. `blocked` means it needs input — relay the actual
+question to the user; don't answer on their behalf unless it's trivial.
 
 Lost the pane ids? `herdr pane list --workspace <ws>` and match on the labels.
 
