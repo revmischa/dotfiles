@@ -1,6 +1,6 @@
 ---
 name: ci
-description: "# CI Status Check and Fix"
+description: "Check CI status for a GitHub PR and fix failing checks until green. Takes a PR number or URL."
 ---
 
 # CI Status Check and Fix

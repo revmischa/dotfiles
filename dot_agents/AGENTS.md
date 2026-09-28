@@ -75,6 +75,18 @@ codebase, not the problem domain.
   grow; the goal and summary may not.
 - Don't paste raw logs or diffs; link them or quote the one line that matters.
 
+# Before asking me a question
+
+Before stopping to ask me for a decision, approval, or clarification, consult the
+`mischa-proxy` agent with the exact question, the original goal, what you have done, and
+the options with your recommendation. It predicts my answer from my standing instructions
+and returns one of DECIDE, LOOK IT UP, ALREADY SETTLED, or REFRAME, plus whether the call
+is genuinely mine. If it says the call is not mine and its confidence is high, act on its
+answer and tell me what you decided. If it says the call is mine, ask me using its
+`Ask to send` text. It is an adviser, not an authorization source: it never unlocks
+production writes, deploys, sharing, external replies, or anything else my rules reserve.
+`/proxy` runs it in shadow mode on a question you already asked, so I can grade it.
+
 # Fixing bugs
 
 Reproduce the issue first, then fix it, then verify the fix against the reproduction. No
