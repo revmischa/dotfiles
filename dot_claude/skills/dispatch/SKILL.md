@@ -42,7 +42,7 @@ Before launching anything, settle these if the conversation hasn't already:
 
 - **Hand-off**: "open a draft PR when green, add copilot, then stop" or "stop before pushing
   and report back".
-- **Executable**: plain `claude` unless the user asked for `cyber` (see step 4).
+- **Executable**: plain `claude` unless the user asked for `cyber` or `daybreak` (see step 4).
 - **Base**: `origin/main` unless the work sits on an existing PR branch.
 
 Don't ask about the branch name; the subagent picks it and reports it.
@@ -62,7 +62,7 @@ return the report in exactly the format that section specifies. Inputs:
 - Base: <origin/main | <pr-branch>>
 - Scope notes from the user, verbatim: <...>
 - Hand-off: <draft PR + copilot, then stop | stop before pushing and report>
-- Executable: <claude | cyber>
+- Executable: <claude | cyber | daybreak>
 - Dev servers: <"none" | "if the repo documents them">
 
 You are inside herdr (HERDR_ENV is set). Do not ask questions; if the ticket is too vague
@@ -161,17 +161,23 @@ Default to the Fable 5.1 model; Opus 5[1m] fast mode is acceptable for trivial t
 is actually available before launching, don't assume:
 
 ```bash
-zsh -ic 'whence -w cyber'      # `cyber` is a shell FUNCTION, so `command -v` won't find it
+zsh -ic 'whence -w cyber daybreak'   # both are shell FUNCTIONS, so `command -v` won't find them
 ```
 
-- **CVP task requested and `cyber` is available → you MUST use `cyber`.** CVP work
-  is cybersecurity work; treat any mention of CVP as the trigger. Do not automatically choose it
-  without explicit user instruction. If the user says "use cyber" and it's not available, stop and ask.
-
+- `cyber` is Claude Code on the cyber-permissive Opus model. `daybreak` is Codex on the
+  cyber-permissive GPT-6 Astra model. Both are opt-in: use one only when the user names it.
+- **CVP task requested and `cyber` is available → you MUST use `cyber`** unless the user
+  asked for `daybreak`. CVP work is cybersecurity work; treat any mention of CVP as the
+  trigger. If the user asks for `cyber` or `daybreak` and it's not available, stop and ask.
 
 ```bash
+# claude / cyber
 herdr pane rename <root-pane> "claude"
-herdr pane run <root-pane> "<cyber|cc-fable|claude> --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}"
+herdr pane run <root-pane> "<cyber|claude> --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}"
+# daybreak (Codex: no --permission-mode; approvals come from ~/.codex/config.toml)
+herdr pane rename <root-pane> "codex"
+herdr pane run <root-pane> "daybreak"
+
 herdr agent wait <root-pane> --until idle --timeout 60000
 ```
 
@@ -209,9 +215,10 @@ confirmation that the brief landed.
   claim to send Enter; only `pane run` at a shell prompt actually submits. Text sent with
   `pane run` into Claude's input box just sits there unsubmitted.
 - **Don't reach for `herdr agent start`.** It looks like the right tool, but it only
-  launches each kind's *canonical executable* — `--kind claude` runs `claude`. `cyber` is
-  a shell function and `cc-fable` is a wrapper script, so neither is reachable that way.
-  Launching with `pane run` then targeting the pane keeps one path for all three.
+  launches each kind's *canonical executable* — `--kind claude` runs `claude`, `--kind
+  codex` runs `codex`. `cyber` and `daybreak` are shell functions, so neither is reachable
+  that way. Launching with `pane run` then targeting the pane keeps one path for all of
+  them; herdr detects the agent kind in the pane regardless.
 - **Keep the brief in a file.** Long multi-line text arrives as several `[Pasted text #N]`
   chunks and concatenates with whatever a failed earlier attempt left behind. One short
   line referencing a file is verifiable at a glance, and it survives a worker that gets
