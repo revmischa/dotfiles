@@ -1,3 +1,7 @@
+---
+description: "Check CI status for a GitHub PR and fix failing checks until green. Takes a PR number or URL."
+---
+
 # CI Status Check and Fix
 
 Check CI status for a GitHub PR and fix any failing checks until everything is green.
