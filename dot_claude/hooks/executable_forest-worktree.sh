@@ -14,7 +14,8 @@ name=$(printf '%s' "$input" | jq -r '.name')
 cwd=$(printf '%s' "$input" | jq -r '.cwd')
 
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel)
-repo=$(basename "$toplevel")
+# Main-repo name, stable from inside linked worktrees (show-toplevel is not).
+repo=$(basename "$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)")")
 forest="${FOREST_DIR:-$HOME/.forest}"
 dir="$forest/$repo/$name"
 
