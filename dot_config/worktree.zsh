@@ -8,12 +8,20 @@
 # herdr workspace: gwf/gwfc run claude in its root pane, gwcd just focuses it.
 # Outside herdr they fall back to launching claude in the current shell / plain cd.
 
+# Main-repo name, stable from inside linked worktrees (show-toplevel is not).
+_gwt_repo() {
+  local common
+  common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
+  basename "$(dirname "$common")"
+}
+
 _gwt_base() {
-  local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  local repo
+  repo=$(_gwt_repo) || {
     printf "\033[31m  not in a git repo\033[0m\n"
     return 1
   }
-  echo "${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}"
+  echo "${FOREST_DIR:-$HOME/.forest}/$repo"
 }
 
 # True when running inside a herdr pane with a reachable server.
@@ -31,7 +39,7 @@ _gwt_ensure() {
     printf "\033[31m  not in a git repo\033[0m\n" >&2
     return 1
   }
-  base="${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}"
+  base=$(_gwt_base) || return 1
   dest="$base/$1"
   if [ ! -d "$dest" ]; then
     if git -C "$toplevel" show-ref --verify --quiet "refs/heads/$1"; then
@@ -89,7 +97,7 @@ _gwt_session() {
   else
     (cd "$toplevel" && claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" --worktree "$1" ${2:+"$2"})
     # Stay in the worktree after claude exits, if it was created
-    local dest="${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}/$1"
+    local dest="$(_gwt_base)/$1"
     [ -d "$dest" ] && cd "$dest"
   fi
 }
@@ -114,11 +122,11 @@ gwfc() {
 # Uses the herdr API when available (marks worktrees open as herdr workspaces),
 # otherwise falls back to globbing the forest directory.
 gwl() {
-  local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  local repo
+  repo=$(_gwt_repo) || {
     printf "\033[31m  not in a git repo\033[0m\n"
     return 1
   }
-  local repo=$(basename "$toplevel")
 
   if command -v herdr >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     local json
@@ -146,7 +154,7 @@ gwl() {
   fi
 
   # Fallback: on-disk forest dirs
-  local base="${FOREST_DIR:-$HOME/.forest}/$repo"
+  local base; base=$(_gwt_base) || return 1
   local dirs=("$base"/*(N/))
   if [ ${#dirs} -eq 0 ]; then
     printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"
@@ -205,8 +213,7 @@ gwrm() {
 }
 
 _gwt_completions() {
-  local toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || return
-  local base="${FOREST_DIR:-$HOME/.forest}/${toplevel##*/}"
+  local base; base=$(_gwt_base 2>/dev/null) || return
   [ -d "$base" ] || return
   compadd -- "$base"/*(N/:t)
 }
