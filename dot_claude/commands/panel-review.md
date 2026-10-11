@@ -70,6 +70,11 @@ or *not an issue*. Findings the two reviewers disagree on always go to the verif
 
 ## 5. Synthesize
 
+Synthesis runs on a **Fable- or Astra-class model or better**. If you (the
+coordinator) are a weaker model, delegate this whole step to an `Agent` with
+`model: fable` (or a `daybreak` worker) and pass it the snapshot path and every
+collected file; relay its output verbatim. Never synthesize on Opus/Sonnet/Haiku.
+
 Apply the `review-judgment` skill across **all** sources: both panel reviewers, the
 verifier, and the existing bot/human reviews. Buckets: **Act on / Consider / Noted /
 Dismissed**. Deduplicate across reviewers and record who found each item. Something
