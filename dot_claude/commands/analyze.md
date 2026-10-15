@@ -1,16 +1,24 @@
 ---
-description: "Run type-checker, bug-finder, and code-simplifier on recent changes"
+name: analyze
+description: "Review changes with type-checker, bug-finder, code-simplifier and code-reviewer in parallel"
 ---
 
-Analyze the code I just wrote or modified. Run these three agents **in parallel**:
+Review the changes in `$ARGUMENTS` (a PR, branch, or path). With no argument, use
+the code I just wrote or modified on the current branch.
 
-1. **type-checker** - Improve type safety, replace Any types, add proper annotations
-2. **bug-finder** - Find subtle bugs, edge cases, and potential failure modes
-3. **code-simplifier** - Check for unnecessary complexity and simplification opportunities
+Read what changed, then run these four agents **in parallel** on it:
 
-After all three complete, provide a unified summary:
+1. **type-checker** - type safety, `Any` leaks, missing annotations
+2. **bug-finder** - subtle bugs, edge cases, failure modes
+3. **code-simplifier** - unnecessary complexity, simplification opportunities
+4. **code-reviewer** - project conventions, security, test coverage gaps
+
+After all four complete, provide one unified summary, deduplicated, with severity
+(blocking, important, suggestion):
 
 - Critical issues that need immediate attention
 - Type safety improvements to make
 - Simplification opportunities
 - Suggested fixes with code examples where helpful
+
+Do not post anything anywhere without confirmation.
