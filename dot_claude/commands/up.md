@@ -1,6 +1,8 @@
 ---
+name: up
 description: "Catch me up: short re-verified status of what this agent has been doing, for re-orienting after working with another agent."
 ---
+name: up
 
 # Catch me up
 

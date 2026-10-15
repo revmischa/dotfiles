@@ -1,7 +1,9 @@
 ---
+name: panel-review
 description: "Panel review of a PR: dispatch cyber + daybreak reviewers, grade the existing bot/human reviews, verify, and synthesize one review"
 argument-hint: "<PR URL> [--post]"
 ---
+name: panel-review
 
 Run a **panel review** of the PR in `$ARGUMENTS`: two independent model reviewers
 (`cyber` = Claude Code on the cyber-permissive model, `daybreak` = Codex on the
@@ -52,6 +54,18 @@ pulumi, no full test suite; targeted tests and scratch containers are fine.
 If `cyber` fails with a model-not-found error, report it and ask. Don't silently
 swap models, because the point of the panel is two different model families.
 
+### 2b. Security reviewer (when available and relevant)
+
+If the `metr-security:security-pr-review` skill is installed **and** the diff touches
+a security-relevant surface (auth, sessions, input handling, secrets, network
+exposure, RLS/RBAC, infra/Pulumi, sandboxing, `SECURITY.md`, or anything the repo's
+`SECURITY.md` names), add a third reviewer in the same message: a `general-purpose`
+subagent that runs that skill on the PR in **draft-only** mode (its own guardrail;
+nothing is posted), writes the draft body + inline findings to
+`/tmp/panel-<repo>-<n>/security.md`, and reports a summary. Its findings go into
+§4 and §5 like any other reviewer's, so the posted review stays one review.
+Skip it for pure docs, test-only, or dependency-pin PRs, and say so in one line.
+
 ## 3. Wait, recover, collect
 
 Watcher subagents per worker. Treat these as **errored, not done**: "Quota exceeded",
@@ -59,7 +73,7 @@ Watcher subagents per worker. Treat these as **errored, not done**: "Quota excee
 For an interrupted Codex session, re-prompt the same pane to continue (its context
 survives). For quota, report and ask.
 
-Collect each worker's file. Don't reconstruct findings from pane scrollback.
+Collect each worker's file (and `security.md` if §2b ran). Don't reconstruct findings from pane scrollback.
 
 ## 4. Verify before synthesizing
 
@@ -76,7 +90,7 @@ coordinator) are a weaker model, delegate this whole step to an `Agent` with
 collected file; relay its output verbatim. Never synthesize on Opus/Sonnet/Haiku.
 
 Apply the `review-judgment` skill across **all** sources: both panel reviewers, the
-verifier, and the existing bot/human reviews. Buckets: **Act on / Consider / Noted /
+security reviewer (§2b), the verifier, and the existing bot/human reviews. Buckets: **Act on / Consider / Noted /
 Dismissed**. Deduplicate across reviewers and record who found each item. Something
 found independently by two sources is stronger evidence. Something found by one
 source and confirmed by the verifier is still Act on.

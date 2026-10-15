@@ -1,6 +1,8 @@
 ---
+name: cmt
 description: "Go through PR comments"
 ---
+name: cmt
 
 Go through the comments on the current Pull Request (PR) and provide a summary of the feedback.
 

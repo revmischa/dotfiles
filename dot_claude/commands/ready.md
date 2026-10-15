@@ -1,13 +1,17 @@
 ---
-description: "Get PR ready for review and merging"
+name: ready
+description: "Get the current PR merge-ready, then mark it ready for review"
 ---
+name: ready
 
-You must get the PR ready.
+Get the current PR merge-ready and mark it ready for review.
 
-- CI must all pass (run /ci command)
-- No conflicts
-- Rebase if necessary on the base branch
-- When you get feedback (e.g. from the Copilot reviewer) run the /feedback command
+1. Run the `opening-a-pr` gate against the current head.
+2. Then follow the `landing-a-pr` skill until it reports merge-ready: conflicts,
+   then review threads (`/cmt`), then CI (`/ci`). Rebase only when needed.
+3. Invoking this command is my authorization to mark the draft ready for review
+   (`gh pr ready`) once that bar is met. It is **not** authorization to merge or to
+   arm auto-merge; I do those.
 
-After pushing, watch for feedback and CI results and do not proceed until all feedback is addressed and CI checks pass and the PR is in a mergeable state.
-Copilot reviews can take a few minutes to appear after pushing. If copilot is not added as a reviewer, ask me if we should add it.
+If `copilot` is not a reviewer, add it. Copilot reviews take a few minutes after a
+push; wait for them per `landing-a-pr` (background watch, never foreground polling).

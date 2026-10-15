@@ -1,6 +1,8 @@
 ---
+name: push-pr
 description: "Push changes and create a GitHub pull request"
 ---
+name: push-pr
 
 Push my changes.
 
@@ -20,7 +22,7 @@ Check the current state:
 
 **If not on a feature branch:**
 
-- Ask the user for a branch name, or suggest one based on the commit/changes
+- Pick a branch name from the commit/changes (branch off `origin/main`, not tracking it)
 - Create and switch to the branch: `git checkout -b <branch-name>`
 - Push to origin: `git push -u origin <branch-name>`
 
@@ -32,7 +34,7 @@ Check the current state:
 
 If there isn't already an open PR:
 
-Use `gh pr create` with:
+Use `gh pr create --draft` with:
 
 - Appropriate title
 - Description including:
@@ -40,7 +42,7 @@ Use `gh pr create` with:
   - Testing information
   - Any notes for reviewers
 
-Then `open` the PR for me in the browser.
+Then add `copilot` as a reviewer and `open` the PR for me in the browser.
 
 ## 4. Error Handling
 
@@ -48,10 +50,10 @@ Halt and report any issues encountered during execution.
 
 # If there is already an open PR:
 
-Push my changes to the existing PR branch.
-Update the PR title and description if necessary.
-Wait and verify that CI checks pass. If not, iterate until they do.
+Push my changes to the existing PR branch. Check the title and description are
+still accurate; edit specific sections only, never overwrite what I wrote.
 
 # After pushing
 
-Run the /ready command to get the PR ready for review and merging.
+Follow the `landing-a-pr` skill (background watch, one push per review round).
+Do not block the foreground on CI.

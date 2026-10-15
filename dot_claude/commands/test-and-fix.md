@@ -1,6 +1,8 @@
 ---
+name: test-and-fix
 description: "Run all quality checks and fix failures"
 ---
+name: test-and-fix
 
 Run all quality checks and fix any failures. For each check:
 
@@ -23,6 +25,8 @@ Run all quality checks and fix any failures. For each check:
 
 **Tests**
 - Tools: `pytest`, `cargo test`, `npm test`, or `go test`
+- Scoped to the changed files and the tests that import them. Never the full
+  suite locally; CI runs that.
 
 ## Detecting Project Tools
 

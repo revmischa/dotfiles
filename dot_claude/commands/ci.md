@@ -1,6 +1,8 @@
 ---
+name: ci
 description: "Check CI status for a GitHub PR and fix failing checks until green. Takes a PR number or URL."
 ---
+name: ci
 
 # CI Status Check and Fix
 
@@ -35,7 +37,9 @@ Provide a PR URL or number as the argument: `/ci 719` or `/ci https://github.com
    - Push to the PR branch
 
 5. **Monitor CI until green**
-   - After pushing, poll `gh pr checks` every 30-60 seconds
+   - After pushing, watch per the `landing-a-pr` skill: a background Monitor that
+     emits on state change, never foreground polling or `--watch`
+   - Classify a red check before rerunning it; a flake gets one `--failed` rerun
    - If new failures appear, diagnose and fix them
    - Continue until ALL checks show `pass`
 
