@@ -1,0 +1,2 @@
+# Match old herdr default_shell: ~/.aliases (cc etc.) loads from .zshrc only.
+shell = ["zsh"]
