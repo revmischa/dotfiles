@@ -1,3 +1,6 @@
 {{ if not (lookPath "herdr") }}
 .claude/skills/herdr
 {{ end }}
+{{ if not (lookPath "herdr-app") }}
+.config/herdr-app
+{{ end }}
