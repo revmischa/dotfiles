@@ -1,40 +1,47 @@
 ---
 name: dispatch
-description: Use when the user (inside herdr) wants a ticket, issue, or task worked on in its own isolated worktree by a background Claude worker — "dispatch this", "take a look at this ticket", "go fix SEN-193 in a worktree", "spin up a worker on this". Creates the herdr workspace, optionally runs the repo's dev servers in sibling panes, and starts a Claude worker on a self-contained brief.
+description: Use when the user (inside Herdr / herdr-core, `hc`) wants a ticket, issue, or task worked on in its own isolated worktree by a background Claude worker — "dispatch this", "take a look at this ticket", "go fix SEN-193 in a worktree", "spin up a worker on this". Creates the git worktree, optionally runs the repo's dev servers in their own hc terminals, and starts a Claude worker in an hc terminal on a self-contained brief.
 ---
 
-# Dispatch: ticket → herdr worktree with a Claude worker
+# Dispatch: ticket → worktree with a Claude worker in hc
 
 You are the **coordinator**. You do not do the work — you set up somewhere for it to
 happen and hand it off:
 
-1. a git worktree opened as its own herdr workspace,
-2. (only if the repo needs it) dev servers in sibling panes,
-3. a Claude worker in the root pane, started on a self-contained brief.
+1. a git worktree under `~/.forest/<repo>/<slug>`,
+2. (only if the repo needs it) dev servers, each in its own background hc terminal,
+3. a Claude worker in a background hc terminal, started on a self-contained brief.
 
-Keep the user's focus where it is (`--no-focus` throughout) until the last step.
+All terminals are started with `hc run --bg`, so the user's focus stays where it is.
+They show up as new tabs in the coordinator's Herdr space (see step 2).
 
 ## Who does what
 
-The herdr window this runs in is long-lived and shared across many dispatches, so keep its
+The Herdr terminal this runs in is long-lived and shared across many dispatches, so keep its
 context small. **Main** does only step 0, collects the two answers only the user can give,
 launches one setup subagent, and relays its report. **The setup subagent** does steps 1–4:
-fetches the ticket, names the branch, creates the worktree, splits server panes, writes the
-brief, starts the worker. Ticket bodies, `herdr` JSON, and pane output never enter main.
+fetches the ticket, names the branch, creates the worktree, starts server terminals, writes
+the brief, starts the worker. Ticket bodies, `hc` JSON, and terminal output never enter main.
 Checking on the worker later is also a subagent.
 
-Main keeps exactly four facts per dispatch: branch, workspace id, root pane id, brief path.
+Main keeps exactly four facts per dispatch: branch, worker terminal (name + address),
+worktree path, brief path.
 
 ## 0. Preconditions
 
 ```bash
-test "${HERDR_ENV:-}" = 1 && test -n "${HERDR_SOCKET_PATH:-}"
+test -n "${HC_TERMINAL_ID:-}" && command -v hc >/dev/null
 ```
 
-If that fails, say you're not running inside herdr and stop. Worktrees land at
-`~/.forest/<repo>/<name>` — shared between herdr (`[worktrees] directory` in
-`~/.config/herdr/config.toml`) and Claude Code (`~/.claude/hooks/forest-worktree.sh`).
-Let herdr choose the path; don't pass `--path`.
+If that fails, say you're not running inside an hc terminal and stop. `$HC_TERMINAL_ID`
+(e.g. `t16`) is the coordinator's address: workers report back to it, and terminals
+started from here become its children. The old `HERDR_ENV` / `HERDR_SOCKET_PATH` are not
+set inside hc, and anything made with the old `herdr` CLI is invisible in Herdr.app, so
+never use `herdr` here.
+
+hc does not create worktrees. Worktrees land at `~/.forest/<repo>/<slug>`, the same root
+Claude Code uses (`~/.claude/hooks/forest-worktree.sh`); step 2 creates them with plain
+`git worktree add`.
 
 ## 0b. Ask the user what only they can answer
 
@@ -64,8 +71,9 @@ return the report in exactly the format that section specifies. Inputs:
 - Hand-off: <draft PR + copilot, then stop | stop before pushing and report>
 - Executable: <claude | cyber | daybreak>
 - Dev servers: <"none" | "if the repo documents them">
+- Coordinator address: <the value of $HC_TERMINAL_ID>
 
-You are inside herdr (HERDR_ENV is set). Do not ask questions; if the ticket is too vague
+You are inside an hc terminal. Do not ask questions; if the ticket is too vague
 to brief a worker, do steps 1–2 only and say so in the report.
 ```
 
@@ -73,8 +81,8 @@ The subagent returns this, and nothing longer:
 
 ```
 branch:     fix/sen-193-k8s-429-retry
-workspace:  <id>
-root pane:  <id>
+terminal:   <name> (<address, e.g. t31>)
+worktree:   ~/.forest/<repo>/<slug>
 brief:      /tmp/dispatch-brief-<slug>.md
 executable: claude
 task:       <one line: repo plus what the change actually is>
@@ -108,19 +116,22 @@ report — a worker with a vague brief burns a whole session.
 ## 2. Create the worktree
 
 Base on latest `origin/main` unless the work sits on top of an existing PR branch (then base on
-that branch, and say so).
+that branch, and say so). hc has no worktree command, so this is plain git, at the same
+`~/.forest/<repo>/<slug>` path the old flow used:
 
 ```bash
-herdr worktree create --branch "$BRANCH" --base origin/main --no-focus
+SLUG="${BRANCH//\//-}"     # branch names contain slashes; the slug names the dir and temp files
+REPO=$(basename "$(dirname "$(git -C <main-checkout> rev-parse --path-format=absolute --git-common-dir)")")
+WT="${FOREST_DIR:-$HOME/.forest}/$REPO/$SLUG"
+git -C <main-checkout> fetch origin
+git -C <main-checkout> worktree add -b "$BRANCH" "$WT" origin/main   # or origin/<pr-branch>
 ```
 
-Read the **workspace id**, **root pane id**, and **path** out of the JSON. Never guess
-IDs — re-read them after every split.
-
-Branch names contain slashes, so keep a filename-safe slug for the temp files below:
+hc terminal names must be 1–32 characters of `a-z 0-9 - _` and unique among live
+terminals, so derive one from the slug:
 
 ```bash
-SLUG="${BRANCH//\//-}"
+NAME=$(printf '%s' "$SLUG" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9_-' '-' | cut -c1-32)
 ```
 
 Then enforce the standing rule that new branches don't track `origin/main`:
@@ -129,6 +140,22 @@ Then enforce the standing rule that new branches don't track `origin/main`:
 git -C "$WT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null \
   && git -C "$WT" branch --unset-upstream
 ```
+
+Terminals started with `hc run` are hidden from the Herdr window unless they carry a
+`herdr.space` label. Put the worker and its servers in the coordinator's space, so each
+shows up there as a new tab:
+
+```bash
+SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"] // empty')
+SPACE_LABEL=(); [ -n "$SPACE" ] && SPACE_LABEL=(--label "herdr.space=$SPACE")
+```
+
+If `SPACE` is empty, launch without the label and say in the report that the worker
+won't be visible in the window (`hc attach <name>` still reaches it).
+
+The old flow gave each dispatch its own herdr workspace. hc has no equivalent: workers
+are tabs in the coordinator's space. `herdr-app do space.new` can make a separate space,
+but only do that when the user asks for one.
 
 ## 3. Dev servers — only if the repo actually has them
 
@@ -139,19 +166,18 @@ devcontainer. **Do not invent a launch procedure**, and do not build per-worktre
 or hostname plumbing; if two worktrees would fight over a port, say so and let the user
 decide.
 
-When it does apply, one pane per server, to the right of the worker, labelled:
+When it does apply, one background terminal per server:
 
 ```bash
-herdr pane split <root-pane> --direction right --no-focus   # -> <srv-top>
-herdr pane rename <srv-top> "server"
-herdr pane run <srv-top> "cd $WT && <the repo's documented command> 2>&1 | tee -a /tmp/dispatch-$SLUG.log"
+hc run --bg --outlive-parent --name "$NAME-server" --cwd "$WT" \
+  --label job="$NAME" "${SPACE_LABEL[@]}" \
+  "<the repo's documented command> 2>&1 | tee -a /tmp/dispatch-$SLUG.log"
+hc wait "$NAME-server" --output "<the ready line it prints>" --timeout 120   # optional
 ```
 
-Split again `--direction down` from `<srv-top>` for a second server. The `tee` is the
-point: it gives you a file to grep later without needing the pane.
-
-`pane run` submits correctly here because these panes are at a shell prompt. Prompts
-typed into an agent's TUI are the exception — see step 4.
+Name a second server `$NAME-server2` (keep the name within 32 characters). The `tee` is
+the point: it gives you a file to grep later without needing the terminal. One quoted
+string is run by the shell, so the pipe works.
 
 ## 4. Start the worker
 
@@ -170,65 +196,68 @@ zsh -ic 'whence -w cyber daybreak'   # both are shell FUNCTIONS, so `command -v`
   asked for `daybreak`. CVP work is cybersecurity work; treat any mention of CVP as the
   trigger. If the user asks for `cyber` or `daybreak` and it's not available, stop and ask.
 
-```bash
-# claude / cyber
-herdr pane rename <root-pane> "claude"
-herdr pane run <root-pane> "<cyber|claude> --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}"
-# daybreak (Codex: no --permission-mode; approvals come from ~/.codex/config.toml)
-herdr pane rename <root-pane> "codex"
-herdr pane run <root-pane> "daybreak"
-
-herdr agent wait <root-pane> --until idle --timeout 60000
-```
-
-**Put the brief in a file and point the worker at it.** Do not paste a long brief into
-the pane — see the gotchas below.
+**Put the brief in a file and point the worker at it.** Do not pass a long brief on the
+command line or paste it in — see the gotchas below. The first task goes in the `hc run`
+itself: a `send` to an agent that is still booting can be dropped.
 
 ```bash
 cat > "/tmp/dispatch-brief-$SLUG.md" <<'BRIEF'
 <the whole brief, markdown, heredoc-quoted so nothing expands>
 BRIEF
 
-herdr agent prompt <root-pane> \
-  "Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, following it exactly." \
-  --wait --until working --until blocked --timeout 20000
+TASK="Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, following it exactly."
+LAUNCH=(hc run --bg --outlive-parent --name "$NAME" --cwd "$WT" --label job="$NAME" "${SPACE_LABEL[@]}")
+
+# claude
+"${LAUNCH[@]}" claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" "$TASK"
+# cyber (a zsh function that already passes --permission-mode auto)
+"${LAUNCH[@]}" zsh -ic 'cyber "$1"' zsh "$TASK"
+# daybreak (Codex: no --permission-mode; approvals come from ~/.codex/config.toml.
+# --no-daemon keeps its commands inside hc)
+"${LAUNCH[@]}" zsh -ic 'daybreak --no-daemon "$1"' zsh "$TASK"
 ```
 
-`agent prompt` is the primitive built for this: it respects the pane's bracketed-paste
-mode, sends the text *and* Enter, and refuses to submit into an agent that is already at
-an approval dialog. It replaces the old `pane run` + `send-keys enter` + re-read dance.
+`--outlive-parent` is required: without it the worker dies when the coordinator's
+program ends. Passing the task as `$1` keeps it out of the inner quoting. Read the
+**address** (`t31`) out of the JSON; never guess it. If the JSON has
+`first_message.sent: false`, the task did NOT arrive: `hc read` the terminal, resolve
+whatever is in the way (a trust dialog may need `hc keys <t> down enter`), then
+`hc send <t> "$TASK"`. Don't blindly resend; read first.
 
-Two failure modes worth recognizing, both loud rather than silent:
+Then confirm the brief landed, without waiting for the whole job:
 
-- `agent_blocked` — the worker is sitting on a permission prompt. `agent read` it, relay
-  the question, don't answer on the user's behalf.
-- `agent_prompt_stalled` — accepted but nothing moved within 5s. Read the pane before
-  resending; a second prompt on top of a live one concatenates.
+```bash
+hc get "$NAME"          # status working = started; blocked = it needs a person
+```
 
-`--until working --until blocked` is deliberate: plain `--wait` settles on `idle`/`done`,
-which for a real dispatch means blocking until the whole job is finished. We only want
-confirmation that the brief landed.
+`blocked` means the worker is sitting on a permission prompt or a question: `hc read` it,
+relay the question, don't answer on the user's behalf.
 
-### herdr gotchas
+### hc gotchas
 
-- **`herdr pane run` is for shell prompts, `herdr agent prompt` is for agent TUIs.** Both
-  claim to send Enter; only `pane run` at a shell prompt actually submits. Text sent with
-  `pane run` into Claude's input box just sits there unsubmitted.
-- **Don't reach for `herdr agent start`.** It looks like the right tool, but it only
-  launches each kind's *canonical executable* — `--kind claude` runs `claude`, `--kind
-  codex` runs `codex`. `cyber` and `daybreak` are shell functions, so neither is reachable
-  that way. Launching with `pane run` then targeting the pane keeps one path for all of
-  them; herdr detects the agent kind in the pane regardless.
+- **Never use the old `herdr` CLI.** Its workspaces, panes and agents don't exist in
+  Herdr.app, which is how dispatched workers went missing before.
+- **`hc send` pastes and presses Enter** and works for shells and agent TUIs alike. It
+  refuses a `blocked` terminal unless `--force`; don't use `--force` to answer a permission
+  dialog for the user. `--if idle` only types when the agent is idle.
+- **Never sleep or poll.** `hc wait <t>` waits until it stops working or exits,
+  `--output X` until a program prints X, `--children any|all` for every terminal you
+  started. A wait ending with `reason: timeout` (default 180 s) is a check-in, not a
+  failure; `reason: message` means something was sent to you. Wait again.
 - **Keep the brief in a file.** Long multi-line text arrives as several `[Pasted text #N]`
   chunks and concatenates with whatever a failed earlier attempt left behind. One short
   line referencing a file is verifiable at a glance, and it survives a worker that gets
   compacted or restarted.
-- **Clear a dirty buffer** with `herdr agent send-keys <pane> ctrl+u` before retrying.
-- **The `herdr` skill is the authority on the CLI**, not this file and not memory. It is
-  generated straight from the installed binary (`herdr --skill`), so it can't drift. Read
-  it when something here doesn't match reality, or run `herdr <group>` (e.g. `herdr
-  agent`) for that group's real syntax. Unknown flags are rejected outright, so a command
-  copied from memory that "looks right" will simply fail.
+- **Clear a dirty buffer** with `hc keys <t> ctrl+u` before retrying.
+- **Resume a Claude session** in a fresh terminal with
+  `hc run --bg --outlive-parent --name <name> --cwd "$WT" claude --resume <session-id> --permission-mode auto`.
+  Take the session id from the exited worker's final `claude --resume <id>` line
+  (`hc read --lines 40 <t>`), not from any id a tool tracked for it.
+- **`hc --skill` is the authority on the CLI**, not this file and not memory. It is
+  printed straight from the installed binary, so it can't drift. Read it when something
+  here doesn't match reality, or run `hc <command> --help` for exact arguments. Unknown
+  flags are rejected outright, so a command copied from memory that "looks right" will
+  simply fail.
 
 The brief is one message and must stand alone — the worker has none of this
 conversation. Include:
@@ -238,9 +267,13 @@ conversation. Include:
 - **Verification**: the repo's test/lint command, and how to tell the fix worked. If it's
   a bug, say "reproduce it first, then fix, then show the repro passing" — that's the
   standing rule, restate it because the worker won't infer it.
-- **Environment**, only if step 3 ran: the URL, credentials, "servers run in sibling
-  herdr panes labelled 'server'; restart one by re-running its command there", and the
-  `/tmp/dispatch-<slug>.log` path.
+- **Environment**, only if step 3 ran: the URL, credentials, "servers run in hc terminals
+  named `<name>-server`; restart one with `hc kill`, `hc rm`, and the same `hc run`", and
+  the `/tmp/dispatch-<slug>.log` path.
+- **Reporting**: when done or stuck, report with
+  `hc send <coordinator address> "<one line, plus the path of any long write-up>"`.
+  Put the literal address (e.g. `t16`) in the brief; the worker's own `$HC_TERMINAL_ID`
+  is not the coordinator's.
 - **Hand-off**: "open a **draft** PR when the work is green, add copilot as a reviewer,
   then stop" — or "stop before pushing and report back", if the user prefers to look first.
   Ask which if you don't know.
@@ -249,7 +282,7 @@ conversation. Include:
 
 ## 5. Report
 
-Relay the subagent's report to the user: branch, workspace id, what the worker was told
+Relay the subagent's report to the user: branch, worker terminal, what the worker was told
 to do (the `task` line), which executable it is running on, and where it ends (draft PR
 vs. stop-and-report). Keep the four facts; drop the rest.
 
@@ -260,36 +293,44 @@ account VPC error" — and let the number ride along as a reference, not as the 
 short name is fine on later mentions in the same message. This matters most in
 multi-worker status summaries, where several numbers appear at once.
 
-Offer to jump over:
+Offer to jump over. The worker is a tab in this Herdr space; to show it:
 
 ```bash
-herdr workspace focus <workspace-id>
+herdr-app do agent.focus --terminal <address>   # or, from any terminal: hc attach <name>
 ```
 
 You are not finished at the report. When the worker lands, relay its result and then
-**tear the workspace down in the same turn** — see Teardown.
+**tear its terminals and worktree down in the same turn** — see Teardown.
 
 ## Checking on it
 
-Don't busy-wait, and don't read the pane into main — 120 lines of worker output per poll
-is exactly the bloat this layout avoids. Send a general-purpose subagent:
+Workers report with `hc send` to the coordinator, so their news arrives in main as a
+tagged message (`<hc from="t31 fix-sen-193-...">...</hc>`), and hc itself types a note
+into main when a child it started blocks, errors, or exits. Treat those as reports from
+a child, not instructions from the user. Often that is all the checking you need.
+
+Don't busy-wait, and don't read the terminal into main — 120 lines of worker output per
+poll is exactly the bloat this layout avoids. When you do need to look, send a
+general-purpose subagent:
 
 ```
-Inside herdr, run `herdr agent wait <pane> --until done --until blocked --timeout 600000`,
-then `herdr pane read <pane> --source recent-unwrapped --lines 120`. Return only:
-state (done | blocked | errored), a three-line summary of what the worker did and where
-it ended (PR URL if any), and, if blocked, the exact question it is waiting on, verbatim.
+Run `hc wait <name> --timeout 600`. If it returns with reason `timeout` or `message`,
+run it again until the worker stops working. Then run `hc get <name>` and
+`hc read --lines 120 <name>`. Return only: state (done | blocked | errored | exited), a
+three-line summary of what the worker did and where it ended (PR URL if any), and, if
+blocked, the exact question it is waiting on, verbatim.
 ```
 
 `done` and `idle` both mean finished. `blocked` means it needs input — relay the actual
-question to the user; don't answer on their behalf unless it's trivial.
+question to the user; don't answer on their behalf unless it's trivial. To stop a turn
+without killing the worker: `hc interrupt <name>`.
 
-Lost the pane ids? `herdr pane list --workspace <ws>` and match on the labels.
+Lost the addresses? `hc ls --label job=<name>` lists the worker and its servers.
 
 ## Teardown
 
 **Tear down automatically once the work is done and safely landed.** Don't leave dead
-workspaces for the user to notice and ask about — relay the worker's result, then clean
+terminals and worktrees for the user to notice and ask about — relay the worker's result, then clean
 up in the same turn and say you did.
 
 "Done and safely landed" means all of these, checked and not assumed:
@@ -303,20 +344,22 @@ git -C "$WT" log --oneline @{u}..HEAD    # empty — nothing unpushed
 
 If any check fails, **stop and tell the user what's unlanded** instead of deleting it.
 Same if the worker ended `blocked`, errored, or you never relayed its findings — the
-pane is the only copy of that context. Also leave it up if the user has typed something
-into the pane that hasn't been submitted yet.
+terminal is the only copy of that context. Also leave it up if the user has typed
+something into the terminal that hasn't been submitted yet.
 
 For a review-only dispatch there is nothing to land: once you've relayed the verdict,
 tear down.
 
 ```bash
-herdr workspace close <workspace-id>    # stops panes, servers, and the agent
+hc ls --label job=<name>                # the worker and its servers; only these
+hc kill <t>; hc rm <t>                  # for each of them: ends the program, removes it
 git -C <main-checkout> worktree remove ~/.forest/<repo>/<slug>
 git -C <main-checkout> branch -d <branch>
 ```
 
-Close the workspace **first** — panes holding the checkout open will defeat
-`worktree remove` and the directory reappears. Never do this to a main checkout.
+Kill the terminals **first** — programs holding the checkout open will defeat
+`worktree remove` and the directory reappears. Only kill terminals this dispatch
+started; `hc ls` also lists the user's other live work. Never do this to a main checkout.
 
 Notes from doing it for real:
 

@@ -40,7 +40,7 @@ Ownership is measured, like liveness: find the creating command in your own or y
 
 ## Phase 2: Check-in
 
-Ask every live agent session (ListAgents / herdr panes / the user, for sessions you cannot reach) one message: I am inventorying every worktree and checkout on this box and deleting what no live session needs. I will not touch any directory a live session reports as in use. Please do not delete anything yourself. Confirm your cwd and any other checkout you or your subagents use; list dirs you created that are DONE and safe to delete; name other dead weight you own (docker images, caches, eval logs). "cwd only: <path>" is a complete answer.
+Ask every live agent session (ListAgents / `hc ls` terminals, sent with `hc send` / the user, for sessions you cannot reach) one message: I am inventorying every worktree and checkout on this box and deleting what no live session needs. I will not touch any directory a live session reports as in use. Please do not delete anything yourself. Confirm your cwd and any other checkout you or your subagents use; list dirs you created that are DONE and safe to delete; name other dead weight you own (docker images, caches, eval logs). "cwd only: <path>" is a complete answer.
 
 Write the protected set (exact paths, not broad prefixes; a prefix as broad as `~/dev` blocks the owner's own explicit releases under it) to a file before Phase 4 starts. Silence is not consent; an unanswered session's cwd stays protected.
 
