@@ -13,7 +13,7 @@ happen and hand it off:
 3. a Claude worker in a background hc terminal, started on a self-contained brief.
 
 All terminals are started with `hc run --bg`, so the user's focus stays where it is.
-They show up as new tabs in the coordinator's Herdr space (see step 2).
+Each dispatch gets its own Herdr space (see step 2).
 
 ## Who does what
 
@@ -142,20 +142,21 @@ git -C "$WT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null \
 ```
 
 Terminals started with `hc run` are hidden from the Herdr window unless they carry a
-`herdr.space` label. Put the worker and its servers in the coordinator's space, so each
-shows up there as a new tab:
+`herdr.space` label. Give each dispatch **its own space**, named after the slug, so every
+worktree and its worker show up separately in the sidebar (tabs in the coordinator's
+space are hard to tell apart):
 
 ```bash
-SPACE=$(hc get "$HC_TERMINAL_ID" --json | jq -r '.labels["herdr.space"] // empty')
+SPACE=$(herdr-app do space.new --name "$NAME" --folder "$WT" | jq -r '.space // empty')
 SPACE_LABEL=(); [ -n "$SPACE" ] && SPACE_LABEL=(--label "herdr.space=$SPACE")
 ```
 
-If `SPACE` is empty, launch without the label and say in the report that the worker
-won't be visible in the window (`hc attach <name>` still reaches it).
+`space.new` also opens a shell tab in the worktree; leave it. If `SPACE` is empty, fall
+back to the coordinator's space (`hc get "$HC_TERMINAL_ID" --json | jq -r
+'.labels["herdr.space"]'`) and say so in the report.
 
-The old flow gave each dispatch its own herdr workspace. hc has no equivalent: workers
-are tabs in the coordinator's space. `herdr-app do space.new` can make a separate space,
-but only do that when the user asks for one.
+To move an already-running terminal into another space, no restart needed:
+`hc label <t> herdr.space=<space-id> where=`.
 
 ## 3. Dev servers — only if the repo actually has them
 
@@ -293,7 +294,7 @@ account VPC error" — and let the number ride along as a reference, not as the 
 short name is fine on later mentions in the same message. This matters most in
 multi-worker status summaries, where several numbers appear at once.
 
-Offer to jump over. The worker is a tab in this Herdr space; to show it:
+Offer to jump over. The worker is in its own Herdr space; to show it:
 
 ```bash
 herdr-app do agent.focus --terminal <address>   # or, from any terminal: hc attach <name>
