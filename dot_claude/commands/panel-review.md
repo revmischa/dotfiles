@@ -11,8 +11,8 @@ cyber-permissive model), graded against whatever reviews already exist on the PR
 (Copilot, Greptile, CodeRabbit, humans), then one synthesized, verified review.
 
 You are the **coordinator**. Follow the `dispatch` skill's layout: main keeps only
-branch / workspace / pane / brief per worker; setup, waiting, and pane reading all go
-through `general-purpose` subagents so worker output never floods this window.
+branch / hc terminal / worktree / brief per worker; setup, waiting, and terminal reading
+all go through `general-purpose` subagents so worker output never floods this window.
 
 Nothing is posted unless `--post` is in the arguments. Without it, end with a draft.
 
@@ -70,10 +70,10 @@ Skip it for pure docs, test-only, or dependency-pin PRs, and say so in one line.
 
 Watcher subagents per worker. Treat these as **errored, not done**: "Quota exceeded",
 "Conversation interrupted" / "Reconnected", "Baked for 0s", or a model error.
-For an interrupted Codex session, re-prompt the same pane to continue (its context
-survives). For quota, report and ask.
+For an interrupted Codex session, re-prompt the same terminal to continue with
+`hc send <t> "continue"` (its context survives). For quota, report and ask.
 
-Collect each worker's file (and `security.md` if §2b ran). Don't reconstruct findings from pane scrollback.
+Collect each worker's file (and `security.md` if §2b ran). Don't reconstruct findings from terminal scrollback.
 
 ## 4. Verify before synthesizing
 
@@ -115,8 +115,8 @@ threads only where the finding adds something. Print the URLs.
 
 Without `--post`: print the draft and stop.
 
-Tear down each review workspace once its output file is saved and relayed:
-close the herdr workspace, remove the worktree, delete the review branch.
+Tear down each reviewer once its output file is saved and relayed:
+`hc kill` and `hc rm` its terminals, remove the worktree, delete the review branch.
 Keep a branch whose commits exist nowhere else and say why.
 
 Final message: verdict in one line, the findings table, the scorecard, the draft

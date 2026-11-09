@@ -1,12 +1,13 @@
-# Claude Code / herdr worktree helpers
+# Claude Code / Herdr worktree helpers
 # gwf/gwfc launch claude in a worktree; gwcd/gwl/gwrm manage them.
-# Worktrees live at ~/.forest/<repo>/<name> (shared with herdr; the location is
-# set for claude by ~/.claude/hooks/forest-worktree.sh and for herdr by
-# [worktrees] directory in ~/.config/herdr/config.toml).
+# Worktrees live at ~/.forest/<repo>/<name> (the location is set for claude by
+# ~/.claude/hooks/forest-worktree.sh; these helpers create them with git).
 #
-# Inside a herdr session (HERDR_ENV=1) these open the worktree as a focused
-# herdr workspace: gwf/gwfc run claude in its root pane, gwcd just focuses it.
-# Outside herdr they fall back to launching claude in the current shell / plain cd.
+# Inside a Herdr.app terminal (herdr-core sets HC_TERMINAL_ID) these open the
+# worktree as its own Herdr space named <repo>/<name>, via herdr-app: gwf/gwfc
+# run claude in it, gwcd just opens or shows it. herdr-core (`hc`) has no
+# worktree or space commands of its own. Outside Herdr they fall back to
+# launching claude in the current shell / plain cd.
 
 # Main-repo name, stable from inside linked worktrees (show-toplevel is not).
 _gwt_repo() {
@@ -24,10 +25,39 @@ _gwt_base() {
   echo "${FOREST_DIR:-$HOME/.forest}/$repo"
 }
 
-# True when running inside a herdr pane with a reachable server.
+# True when running inside a Herdr.app terminal with the app CLI available.
 _gwt_in_herdr() {
-  [ "${HERDR_ENV:-}" = "1" ] && [ -n "${HERDR_SOCKET_PATH:-}" ] &&
-    command -v herdr >/dev/null 2>&1
+  [ -n "${HC_TERMINAL_ID:-}" ] && command -v herdr-app >/dev/null 2>&1 &&
+    command -v jq >/dev/null 2>&1
+}
+
+# Ids of open Herdr spaces rooted at a folder, from `herdr-app ls`.
+_gwt_spaces_at() {
+  herdr-app ls 2>/dev/null |
+    jq -r --arg f "$1" '.spaces[]? | select(.folder == $f) | .id'
+}
+
+# Open the worktree at $2 as a Herdr space named <repo>/$1, or show the one
+# already open there. Remaining args, if any, are the program to run in it.
+_gwt_open_space() {
+  local name=$1 dest=$2 space repo
+  shift 2
+  space=$(_gwt_spaces_at "$dest" | head -n 1)
+  if [ -n "$space" ]; then
+    herdr-app do space.select --id "$space" >/dev/null 2>&1 &&
+      printf "\033[2m  switched to existing\033[0m \033[1m%s\033[0m\n" "$name"
+    return
+  fi
+  repo=$(_gwt_repo) || return 1
+  if [ $# -gt 0 ]; then
+    herdr-app do space.new --name "$repo/$name" --folder "$dest" \
+      --argv "$(printf '%s\n' "$@" | jq -nRc '[inputs]')" >/dev/null 2>&1
+  else
+    herdr-app do space.new --name "$repo/$name" --folder "$dest" >/dev/null 2>&1
+  fi || {
+    printf "\033[31m  herdr-app: failed to open space\033[0m\n"
+    return 1
+  }
 }
 
 # Ensure a git worktree exists at the forest path; echoes the path on stdout.
@@ -75,24 +105,14 @@ _gwt_session() {
     return 1
   }
   if _gwt_in_herdr; then
-    # Open the worktree as a focused herdr workspace, run claude in its root pane.
-    local dest out already pane
+    # Open the worktree as its own Herdr space running claude, or show it if open.
+    local dest
     dest=$(_gwt_ensure "$1") || return 1
-    out=$(herdr worktree open --path "$dest" --focus --json 2>/dev/null) || {
-      printf "\033[31m  herdr: failed to open worktree\033[0m\n"
-      return 1
-    }
-    already=$(printf '%s' "$out" | jq -r '.result.already_open // false')
-    if [ "$already" = "true" ]; then
-      printf "\033[2m  switched to existing\033[0m \033[1m%s\033[0m\n" "$1"
-      return 0
+    if [ -n "$(_gwt_spaces_at "$dest")" ]; then
+      _gwt_open_space "$1" "$dest"
+      return
     fi
-    pane=$(printf '%s' "$out" | jq -r '.result.root_pane.pane_id // empty')
-    [ -z "$pane" ] && {
-      printf "\033[31m  herdr: no pane id in response\033[0m\n"
-      return 1
-    }
-    herdr pane run "$pane" "claude --permission-mode ${CLAUDE_PERMISSION_MODE:-auto}${2:+ $2}" >/dev/null &&
+    _gwt_open_space "$1" "$dest" claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" ${2:+"$2"} &&
       printf "\033[32m  started claude in\033[0m \033[1m%s\033[0m\n" "$1"
   else
     (cd "$toplevel" && claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" --worktree "$1" ${2:+"$2"})
@@ -119,8 +139,7 @@ gwfc() {
 }
 
 # List worktrees for the current repo with branch and status info.
-# Uses the herdr API when available (marks worktrees open as herdr workspaces),
-# otherwise falls back to globbing the forest directory.
+# Inside Herdr, worktrees open as a Herdr space are marked.
 gwl() {
   local repo
   repo=$(_gwt_repo) || {
@@ -128,38 +147,14 @@ gwl() {
     return 1
   }
 
-  if command -v herdr >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-    local json
-    json=$(herdr worktree list --json 2>/dev/null)
-    if [ -n "$json" ]; then
-      printf "\n\033[1;34m  %s\033[0m \033[2mworktrees\033[0m\n\n" "$repo"
-      printf '%s' "$json" | jq -r '
-        .result.worktrees[]
-        | select(.is_linked_worktree == true)
-        | [ .path, .branch, (if .open_workspace_id then "1" else "0" end) ]
-        | @tsv' |
-        while IFS=$'\t' read -r wt branch open; do
-          local name="${wt##*/}"
-          local short=$(git -C "$wt" log -1 --format="%s" 2>/dev/null)
-          local dirty=""
-          [ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ] && dirty="\033[33m*\033[0m"
-          local mark="  "
-          [ "$open" = "1" ] && mark="\033[35m●\033[0m "
-          printf "  %b\033[32m%-20s\033[0m \033[36m%-30s\033[0m \033[2m%.40s\033[0m %b\n" \
-            "$mark" "$name" "$branch" "$short" "$dirty"
-        done
-      printf "\n  \033[35m●\033[0m \033[2mopen as herdr workspace\033[0m\n\n"
-      return 0
-    fi
-  fi
-
-  # Fallback: on-disk forest dirs
   local base; base=$(_gwt_base) || return 1
   local dirs=("$base"/*(N/))
   if [ ${#dirs} -eq 0 ]; then
     printf "\033[2m  no worktrees for \033[0m\033[1m%s\033[0m\n" "$repo"
     return 0
   fi
+  local open=""
+  _gwt_in_herdr && open=$(herdr-app ls 2>/dev/null | jq -r '.spaces[]?.folder')
   printf "\n\033[1;34m  %s\033[0m \033[2mworktrees\033[0m\n\n" "$repo"
   for d in "${dirs[@]}"; do
     local name="${d##*/}"
@@ -167,13 +162,17 @@ gwl() {
     local short=$(git -C "$d" log -1 --format="%s" 2>/dev/null)
     local dirty=""
     [ -n "$(git -C "$d" status --porcelain 2>/dev/null)" ] && dirty="\033[33m *\033[0m"
-    printf "  \033[32m%-20s\033[0m \033[36m%-25s\033[0m \033[2m%.50s\033[0m%b\n" "$name" "$branch" "$short" "$dirty"
+    local mark="  "
+    [ -n "$open" ] && print -r -- "$open" | grep -qxF -- "$d" && mark="\033[35m●\033[0m "
+    printf "  %b\033[32m%-20s\033[0m \033[36m%-25s\033[0m \033[2m%.50s\033[0m%b\n" \
+      "$mark" "$name" "$branch" "$short" "$dirty"
   done
+  [ -n "$open" ] && printf "\n  \033[35m●\033[0m \033[2mopen as a Herdr space\033[0m"
   printf "\n"
 }
 
-# Go to a worktree, creating it if missing. Inside herdr this opens (and focuses)
-# the worktree as a workspace; outside herdr it cd's the current shell.
+# Go to a worktree, creating it if missing. Inside Herdr this opens (or shows)
+# the worktree as a Herdr space; outside Herdr it cd's the current shell.
 gwcd() {
   local target="$1"
   if [ -z "$target" ]; then
@@ -189,8 +188,12 @@ gwcd() {
   local dest
   dest=$(_gwt_ensure "$target") || return 1
   if _gwt_in_herdr; then
-    herdr worktree open --path "$dest" --focus --json >/dev/null 2>&1 &&
-      printf "\033[34m  opened workspace\033[0m \033[1m%s\033[0m\n" "$target"
+    if [ -n "$(_gwt_spaces_at "$dest")" ]; then
+      _gwt_open_space "$target" "$dest"
+    else
+      _gwt_open_space "$target" "$dest" &&
+        printf "\033[34m  opened space\033[0m \033[1m%s\033[0m\n" "$target"
+    fi
   else
     cd "$dest"
   fi
@@ -219,11 +222,15 @@ _gwt_completions() {
 }
 compdef _gwt_completions gwcd gwrm
 
-# herdr quality-of-life aliases
-if command -v herdr >/dev/null 2>&1; then
-  alias hd='herdr'                    # launch / attach the persistent session
-  alias hda='herdr session attach'   # attach a named session: hda <name>
-  alias hst='herdr status'           # client + server status
-  alias hw='herdr worktree list'     # worktrees known to herdr
-  alias hws='herdr workspace list'   # open workspaces
+# Herdr quality-of-life aliases. Terminals run in herdr-core (`hc`); Herdr.app
+# (`herdr-app`) shows and arranges them. The old `herdr` multiplexer's worktree
+# list has no equivalent; use gwl.
+if command -v hc >/dev/null 2>&1; then
+  alias hda='hc attach'              # attach a terminal: hda <t> (ctrl+\ detaches)
+  alias hst='hc server status'       # herdr-core status
+  alias hls='hc ls'                  # live terminals
+fi
+if command -v herdr-app >/dev/null 2>&1; then
+  alias hd='herdr-app'               # open / raise the Herdr window
+  alias hws='herdr-app ls'           # spaces, tabs and terminals
 fi
