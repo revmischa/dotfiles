@@ -184,8 +184,7 @@ string is run by the shell, so the pipe works.
 
 ### Pick the executable FIRST — it decides the command you run
 
-Default to the Fable 5.1 model; Opus 5[1m] fast mode is acceptable for trivial tasks. Check what
-is actually available before launching, don't assume:
+Check what is actually available before launching, don't assume:
 
 ```bash
 zsh -ic 'whence -w cyber daybreak'   # both are shell FUNCTIONS, so `command -v` won't find them
