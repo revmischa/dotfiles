@@ -184,7 +184,7 @@ string is run by the shell, so the pipe works.
 
 ### Pick the executable FIRST — it decides the command you run
 
-Default to `claude-fable-5-2-data-retention[1m]`; Opus 5[1m] fast mode is acceptable for trivial tasks. Check what
+Default to the Fable 5.1 model; Opus 5[1m] fast mode is acceptable for trivial tasks. Check what
 is actually available before launching, don't assume:
 
 ```bash
