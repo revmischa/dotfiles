@@ -183,7 +183,7 @@ string is run by the shell, so the pipe works.
 
 ### Pick the executable FIRST — it decides the command you run
 
-Default to the Fable 5.1 model; Opus 5[1m] fast mode is acceptable for trivial tasks. Check what
+Default to `claude-fable-5-2-data-retention[1m]` (passed as `--model`); Opus 5[1m] fast mode is acceptable for trivial tasks. Check what
 is actually available before launching, don't assume:
 
 ```bash
@@ -209,7 +209,7 @@ TASK="Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, fol
 LAUNCH=(hc run --bg --outlive-parent --name "$NAME" --cwd "$WT" --label job="$NAME" "${SPACE_LABEL[@]}")
 
 # claude
-"${LAUNCH[@]}" claude --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" "$TASK"
+"${LAUNCH[@]}" claude --model 'claude-fable-5-2-data-retention[1m]' --permission-mode "${CLAUDE_PERMISSION_MODE:-auto}" "$TASK"
 # cyber (a zsh function that already passes --permission-mode auto)
 "${LAUNCH[@]}" zsh -ic 'cyber "$1"' zsh "$TASK"
 # daybreak (Codex: no --permission-mode; approvals come from ~/.codex/config.toml.
