@@ -155,8 +155,8 @@ SPACE_LABEL=(); [ -n "$SPACE" ] && SPACE_LABEL=(--label "herdr.space=$SPACE")
 back to the coordinator's space (`hc get "$HC_TERMINAL_ID" --json | jq -r
 '.labels["herdr.space"]'`) and say so in the report.
 
-To move an already-running terminal into another space, no restart needed:
-`hc label <t> herdr.space=<space-id> where=`.
+Re-labelling a running terminal does **not** move it in the window; it stays where it
+was and the new space shows only its shell. Set the space at launch.
 
 ## 3. Dev servers — only if the repo actually has them
 
