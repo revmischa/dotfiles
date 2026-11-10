@@ -1,5 +1,6 @@
-{{ if not (lookPath "herdr") }}
-.claude/skills/herdr
+{{ if not (lookPath "hc") }}
+.claude/skills/hc
+.local/bin/hc-space
 {{ end }}
 {{ if not (lookPath "herdr-app") }}
 .config/herdr-app

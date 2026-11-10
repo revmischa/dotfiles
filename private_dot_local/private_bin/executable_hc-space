@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# hc-space: start a background hc terminal in its own Herdr.app space.
+#
+#   hc-space [hc run options] <command or template> [task]
+#   HC_SPACE=sp... hc-space ...     # add another terminal to an existing space
+#
+# Herdr.app places an `hc run` terminal by its labels:
+#   - `herdr.space=<id the window hasn't seen>` -> a new space (sidebar entry),
+#     named after the terminal's --cwd folder
+#   - no space label, started from a terminal   -> a tab in the PARENT's space
+#   - no space label, started with --no-parent  -> hidden from the window
+# hc itself has no space command (that is `herdr-app`, which exists only on the
+# machine running Herdr.app), so this wrapper mints the id and adds the label.
+#
+# Always adds --bg and --outlive-parent. Prints hc's JSON on stdout and the
+# space id on stderr as `space: sp...`, so a caller can reuse it via HC_SPACE.
+set -euo pipefail
+
+if [[ $# -eq 0 || $1 == -h || $1 == --help ]]; then
+  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+  exit 0
+fi
+
+space=${HC_SPACE:-sp$(openssl rand -hex 16)}
+printf 'space: %s\n' "$space" >&2
+exec hc run --bg --outlive-parent --label "herdr.space=$space" "$@"
