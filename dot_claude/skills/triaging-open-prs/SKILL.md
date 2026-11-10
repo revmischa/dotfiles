@@ -31,6 +31,14 @@ gh api graphql -f query='query{repository(owner:"OWNER",name:"REPO"){pullRequest
 
 `mergeable`/`mergeStateStatus` are computed **lazily** — a query can return `UNKNOWN`. Re-query those PRs until resolved. Also re-pull at the start of every session: states drift, PRs merge/close, **new PRs appear**. GitHub API 5xx flakes happen; retry before concluding anything (for `gh pr diff` 503s, `git fetch origin refs/pull/N/head:refs/remotes/origin/pr-N` and diff locally).
 
+## Step 1b: Check the Linear inbox, and keep checking it
+
+Review requests, PR mentions and comments on the user's issues often land in their Linear inbox before (or instead of) GitHub. Read it at the start, then again every time you finish a PR or come back from waiting on CI or a worker, not just once:
+
+- `get_notifications` (Linear MCP) for unread items; read each one's issue or comment (`get_issue`, `list_comments`) before acting.
+- Fold what you find into the triage: a reviewer asking for changes, a linked PR you didn't list, a question waiting on the user, a ticket that a PR closes.
+- Surface anything that needs the user's answer; don't reply on their behalf without their OK. Mark a notification read only after it has been handled or relayed.
+
 ## Step 2: Triage into buckets
 
 | State | Bucket | Action |
