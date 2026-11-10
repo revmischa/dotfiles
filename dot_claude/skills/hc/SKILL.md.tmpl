@@ -1,0 +1,45 @@
+{{- /* The body is the installed binary's own manual, `hc --skill`: hc is the
+       authority on its CLI, so don't hand-edit it. `chezmoi apply` and a check in
+       .zshrc both regenerate it after hc is upgraded. Only the frontmatter and the
+       "This machine" appendix below are ours; keep the appendix to what hc's manual
+       can't know (how Herdr.app places terminals, our wrapper).
+       .chezmoiignore drops this file on machines without hc. */ -}}
+---
+name: hc
+description: "Herdr / herdr-core (`hc`): run programs and coding agents in persistent terminals. Use whenever you start, message, wait on, read, or clean up an hc terminal (background workers, helper agents, dev servers, slow builds), when the user mentions Herdr, a Herdr space, workspace, tab or session, or when $HC_TERMINAL_ID is set and work should run in the background. Never use the old `herdr` CLI."
+---
+
+{{ output "hc" "--skill" | trim }}
+
+## This machine: where a terminal shows up in Herdr.app
+
+hc has no notion of windows, spaces or tabs, and `herdr-app` (which arranges them)
+exists only on the machine running Herdr.app, not on an SSH host. Herdr.app places
+each hc terminal by its labels instead:
+
+| How it was started | Where it appears |
+| --- | --- |
+| `--label herdr.space=<id the window hasn't seen>` | **its own space** (a sidebar entry), named after its `--cwd` folder |
+| no space label, started from a terminal (the default) | **a tab in the parent's space**, i.e. in the user's current workspace |
+| no space label, `--no-parent` | hidden from the window (still in `hc ls`) |
+
+Unlabelled `hc run` calls are why tabs pile up in the user's space. So:
+
+- **A worker, reviewer, long-lived agent or anything the user should be able to find:**
+  start it in its own space with `hc-space` (in `~/.local/bin`), which is
+  `hc run --bg --outlive-parent --label herdr.space=<fresh id>` plus your arguments.
+  It prints `space: sp…` on stderr; pass `HC_SPACE=sp…` to put a second terminal (its
+  dev server) in the same space.
+
+  ```sh
+  hc-space --name fix-x --cwd ~/.forest/repo/fix-x claude --permission-mode auto "Read /tmp/brief.md and do it."
+  HC_SPACE=sp0123… hc-space --name fix-x-server --cwd ~/.forest/repo/fix-x "bun dev"
+  ```
+
+- **A short helper you wait on yourself** (a build, a test run, `gh run watch`): add
+  `--no-parent` so it stays out of the window, and `--rm --no-notify` as hc's manual
+  suggests. You lose parent notes, which `hc wait <t>` replaces.
+- Only add a tab to the user's space when they ask for one.
+- The space must be set at launch. `hc label` on a running terminal does not move it.
+- `hc get <t>` shows a `where` label (`<space name> / <tab>`) once the window has
+  placed it; check it after launching anything the user should see.
