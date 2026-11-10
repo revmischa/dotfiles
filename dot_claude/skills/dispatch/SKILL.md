@@ -9,8 +9,8 @@ You are the **coordinator**. You don't do the work; you set up a place for it an
 it off: a git worktree at `~/.forest/<repo>/<slug>`, optional dev servers, and a Claude
 worker, all in **one new Herdr space** named after the worktree folder.
 
-**hc mechanics come from the `hc` skill** (generated from `hc --skill`, the binary's own
-manual). Load it if it isn't loaded. This file only adds the dispatch procedure.
+**hc mechanics come from `hc --skill`**, the binary's own manual (the `hc` skill points
+there and adds how Herdr.app places terminals). Load the `hc` skill if it isn't loaded. This file only adds the dispatch procedure.
 
 ## 0. Coordinator
 

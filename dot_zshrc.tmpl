@@ -337,15 +337,3 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 
 
-# The hc skill is generated from `hc --skill`, so it goes stale whenever herdr-core is
-# upgraded (`hc update`, the app, or by hand). chezmoi apply regenerates it, but that
-# isn't part of any upgrade path, so refresh it here when the binary is newer than the
-# skill. The common case costs nothing: ${commands[...]} is a hash lookup and -nt is a
-# builtin. chezmoi renders the template so the frontmatter and appendix stay ours.
-() {
-  local skill="$HOME/.claude/skills/hc/SKILL.md" bin=${commands[hc]:A}
-  # return 0, not bare return: a non-zero $? here shows as an error in the first prompt
-  [[ -n $bin && ( ! -e $skill || $bin -nt $skill ) ]] || return 0
-  (( $+commands[chezmoi] )) && chezmoi apply --force "$skill" >/dev/null 2>&1 && touch "$skill"
-  return 0
-}
