@@ -91,10 +91,14 @@ TASK="Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, fol
 W=(--name "$NAME" --cwd "$WT" --label job="$NAME")
 CLAUDE=$HOME/.local/bin/claude      # hc's PATH may lack ~/.local/bin
 hc-space "${W[@]}" "$CLAUDE" --permission-mode auto "$TASK"   2>/tmp/dispatch-$SLUG.space
-#   cyber:    hc-space "${W[@]}" zsh -ic 'cyber "$1"' zsh "$TASK"
-#   daybreak: hc-space "${W[@]}" zsh -ic 'daybreak --no-daemon "$1"' zsh "$TASK"
+#   cyber:    hc-space "${W[@]}" zsh -ic 'cyber "$@"' zsh "$TASK"
+#   daybreak: hc-space "${W[@]}" zsh -ic 'daybreak --no-daemon "$@"' zsh "$TASK"
 SPACE=$(sed -n 's/^space: //p' /tmp/dispatch-$SLUG.space)
 ```
+
+A model or effort the user names goes on the command line (`--model claude-fable-5-2
+--effort max`), which sets it for that session only; never send `/model`, which rewrites
+the global default. Read the screen once after launch for a model error.
 
 Read the address from the JSON. If `first_message.sent` is false, follow the `hc`
 skill's recovery (read first, never blindly resend). Then `hc get "$NAME"`: status
