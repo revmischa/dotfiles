@@ -142,18 +142,22 @@ git -C "$WT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null \
 ```
 
 Terminals started with `hc run` are hidden from the Herdr window unless they carry a
-`herdr.space` label. Give each dispatch **its own space**, named after the slug, so every
-worktree and its worker show up separately in the sidebar (tabs in the coordinator's
-space are hard to tell apart):
+`herdr.space` label. Give each dispatch **its own space**, so every worktree and its
+worker show up separately in the sidebar (tabs in the coordinator's space are hard to
+tell apart). Spaces need nothing but `hc`: a terminal launched with a `herdr.space` id
+the window has not seen yet opens a new space, which the window names after the
+terminal's folder (the worktree's directory name, i.e. the slug). So mint an id and
+launch everything for this dispatch with it:
 
 ```bash
-SPACE=$(herdr-app do space.new --name "$NAME" --folder "$WT" | jq -r '.space // empty')
-SPACE_LABEL=(); [ -n "$SPACE" ] && SPACE_LABEL=(--label "herdr.space=$SPACE")
+SPACE="sp$(openssl rand -hex 16)"            # same shape as the window's own ids
+SPACE_LABEL=(--label "herdr.space=$SPACE")
 ```
 
-`space.new` also opens a shell tab in the worktree; leave it. If `SPACE` is empty, fall
-back to the coordinator's space (`hc get "$HC_TERMINAL_ID" --json | jq -r
-'.labels["herdr.space"]'`) and say so in the report.
+Do not call `herdr-app`: it exists only on the machine running Herdr.app, not on an SSH
+host, and a dispatch that depends on it silently falls back to a tab in the
+coordinator's space. After launching, `hc get "$NAME"` should show a `where` label of
+`<slug> / 1`; if it shows the coordinator's space name instead, say so in the report.
 
 Re-labelling a running terminal does **not** move it in the window; it stays where it
 was and the new space shows only its shell. Set the space at launch.
@@ -293,10 +297,11 @@ account VPC error" — and let the number ride along as a reference, not as the 
 short name is fine on later mentions in the same message. This matters most in
 multi-worker status summaries, where several numbers appear at once.
 
-Offer to jump over. The worker is in its own Herdr space; to show it:
+Offer to jump over. The worker is in its own Herdr space, named after the worktree
+directory; from any terminal:
 
 ```bash
-herdr-app do agent.focus --terminal <address>   # or, from any terminal: hc attach <name>
+hc attach <name>
 ```
 
 You are not finished at the report. When the worker lands, relay its result and then
