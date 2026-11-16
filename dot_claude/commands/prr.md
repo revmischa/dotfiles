@@ -16,6 +16,14 @@ reviewers, verifier, Fable-class synthesis, `review-judgment` buckets). One
 exception to its posting rule: `/prr` **does** carry authority to approve or request
 changes, so the posted review's event is decided by §2 instead of always `COMMENT`.
 
+Add one pass the panel doesn't do on its own: **is there a simpler, cloud-native way?**
+Name the AWS-managed service, EKS add-on, or component the org already runs (CloudWatch,
+Container Insights, Datadog, OTel, a Pulumi provider) that could replace new custom
+infrastructure in the PR, and weigh it as at least a *Consider* item. Do this first for
+outside contributors, before asking them to polish details: a design that a managed
+service makes unnecessary is cheaper to redirect early. If it's unclear whether the
+managed option would work, say so and suggest a short spike on a dev stack.
+
 ## 2. Verdict
 
 Decide from the synthesized buckets at the current head:
