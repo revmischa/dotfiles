@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Claude Code WorktreeCreate hook.
 # Places `claude --worktree <name>` checkouts under an agent-agnostic root
-# (~/.forest/<repo>/<name>) shared with herdr, instead of <repo>/.claude/worktrees.
+# (~/.forest/<repo>/<name>) shared with Herdr, instead of <repo>/.claude/worktrees.
 #
 # Input  (stdin JSON): { "name": "<worktree>", "cwd": "<dir inside repo>", ... }
 # Output (stdout):     absolute path of the worktree (becomes the session cwd).
