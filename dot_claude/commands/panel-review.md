@@ -13,6 +13,8 @@ cyber-permissive model), graded against whatever reviews already exist on the PR
 You are the **coordinator**. Follow the `dispatch` skill's layout: main keeps only
 branch / hc terminal / worktree / brief per worker; setup, waiting, and terminal reading
 all go through `general-purpose` subagents so worker output never floods this window.
+The red-team models run only as those dispatched workers: never use one yourself, whether
+as your own session's model, a subagent's, or by calling it inline.
 
 Nothing is posted unless `--post` is in the arguments. Without it, end with a draft.
 

@@ -83,8 +83,10 @@ brief into a terminal.
 
 **4. Launch, in one new space.** Pick the executable first: `zsh -ic 'whence -w cyber daybreak'`
 (they're shell functions). A CVP / security task uses `cyber` when it exists; use
-`daybreak` only when asked. If a requested one is missing, stop and say so. Start the
-worker first and keep its space id for servers:
+`daybreak` only when asked. If a requested one is missing, stop and say so. These
+red-team models run only as dispatched workers: never use one yourself, whether as your
+own session's model, a subagent's, or by calling it inline. Start the worker first and
+keep its space id for servers:
 
 ```bash
 TASK="Read /tmp/dispatch-brief-$SLUG.md and carry out the task it describes, following it exactly."
