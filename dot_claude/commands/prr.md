@@ -22,7 +22,10 @@ Container Insights, Datadog, OTel, a Pulumi provider) that could replace new cus
 infrastructure in the PR, and weigh it as at least a *Consider* item. Do this first for
 outside contributors, before asking them to polish details: a design that a managed
 service makes unnecessary is cheaper to redirect early. If it's unclear whether the
-managed option would work, say so and suggest a short spike on a dev stack.
+managed option would work, say so and suggest a short spike on a dev stack. Also
+run the `ponytail:ponytail-review` skill on the PR (is every line needed, is it
+over-engineered, does it hold under load) and fold its findings into the buckets; if
+the ponytail plugin isn't installed, say so in the review summary.
 
 ## 2. Verdict
 
