@@ -1,7 +1,9 @@
 # Claude Code / Herdr worktree helpers
 # gwf/gwfc launch claude in a worktree; gwcd/gwl/gwrm manage them.
 # Worktrees live at ~/.forest/<repo>/<name> (the location is set for claude by
-# ~/.claude/hooks/forest-worktree.sh; these helpers create them with git).
+# ~/.claude/hooks/forest-worktree.sh and for Herdr's New worktree dialog by
+# worktrees.directory in ~/.config/herdr-app/settings.json; these helpers create
+# them with git).
 #
 # Inside a Herdr.app terminal (herdr-core sets HC_TERMINAL_ID) these open the
 # worktree as its own Herdr space named <repo>/<name>, via herdr-app: gwf/gwfc
