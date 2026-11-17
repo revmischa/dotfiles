@@ -29,7 +29,7 @@ Unlabelled `hc run` calls are why tabs pile up in the user's space. So:
   server) in the same space.
 
   ```sh
-  hc-space --name fix-x --cwd ~/.forest/repo/fix-x ~/.local/bin/claude --permission-mode auto "Read /tmp/brief.md and do it."
+  hc-space --name fix-x --cwd ~/.forest/repo/fix-x ~/.local/bin/claude --name fix-x --permission-mode auto "Read /tmp/brief.md and do it."
   HC_SPACE=sp0123… hc-space --name fix-x-server --cwd ~/.forest/repo/fix-x "bun dev"
   ```
 
@@ -40,3 +40,13 @@ Unlabelled `hc run` calls are why tabs pile up in the user's space. So:
 - Set the space at launch: `hc label` on a running terminal does not move it.
 - `hc get <t>` shows a `where` label (`<space name> / <tab>`) once the window has placed
   it. Check it after launching anything the user should see.
+
+## Talking to another Claude session
+
+hc runs the terminal; it is not how two Claude sessions talk. For Claude to Claude use
+cross-session messaging: `ListAgents` to find the session, `SendMessage` to write to it,
+and `notify_when_idle: true` in place of `hc wait`. The message arrives marked as coming
+from another session, between the receiver's tool calls, with a reply address. `hc send`
+types into the prompt as if the user had, so keep it for programs with no inbox: Codex
+(`cyber`, `daybreak`), shells, REPLs. Start a Claude you will message with
+`claude --name <the hc terminal name>` so one name addresses both.
