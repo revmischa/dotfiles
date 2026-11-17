@@ -12,6 +12,13 @@ A minimal, clean dotfiles setup using [chezmoi](https://www.chezmoi.io/) for man
 - **Shell aliases** for productivity
 - **Cross-platform support** for macOS and Linux/devcontainers
 
+## Keep it generic
+
+This repo is public and not tied to any employer. Nothing org- or company-specific goes
+here: no org names, internal services, hostnames, repos or ticket IDs. Put that in a
+private repo or in the untracked local files (`~/.zshrc.local`,
+`~/.agents/AGENTS.local.md`).
+
 ## Quick Start
 
 1. Install chezmoi:

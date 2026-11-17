@@ -58,7 +58,8 @@ swap models, because the point of the panel is two different model families.
 
 ### 2b. Security reviewer (when available and relevant)
 
-If the `security-pr-review` skill is installed **and** the diff touches
+If a dedicated security PR-review skill is installed (your local agent instructions
+name it, if there is one) **and** the diff touches
 a security-relevant surface (auth, sessions, input handling, secrets, network
 exposure, RLS/RBAC, infra/Pulumi, sandboxing, `SECURITY.md`, or anything the repo's
 `SECURITY.md` names), add a third reviewer in the same message: a `general-purpose`

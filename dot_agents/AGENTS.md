@@ -4,6 +4,10 @@ Shared across coding agents (Claude Code imports this from `~/.claude/CLAUDE.md`
 reads it via `~/.codex/AGENTS.md`). Machine- and employer-specific rules live in
 `~/.agents/AGENTS.local.md`, which is not in the dotfiles repo.
 
+The dotfiles repo is public. Keep everything in it generic: no employer, org, internal
+service, repo, ticket or hostname. Anything tied to one org goes in the local file or a
+private repo.
+
 # Marking your text as an agent
 
 When you write messages on Slack, post on GitHub, create Google Docs, Linear issues, or
