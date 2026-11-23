@@ -101,7 +101,8 @@ CLAUDE=$HOME/.local/bin/claude      # hc's PATH may lack ~/.local/bin
 # env PATH=...: hc's own PATH lacks nvm's node, so plugin hooks would fail with "node: not found".
 hc-space "${W[@]}" env PATH="$PATH" "$CLAUDE" --name "$NAME" --permission-mode auto "$TASK"   2>/tmp/dispatch-$SLUG.space
 #   cyber:    hc-space "${W[@]}" zsh -ic 'cyber "$@"' zsh "$TASK"
-#   daybreak: hc-space "${W[@]}" zsh -ic 'daybreak --no-daemon "$@"' zsh "$TASK"
+#   daybreak: hc-space "${W[@]}" zsh -ic 'daybreak --no-daemon --approve-for-me "$@"' zsh "$TASK"
+#   (--approve-for-me is Codex's auto mode; without it the worker stops for approval on every command.)
 SPACE=$(sed -n 's/^space: //p' /tmp/dispatch-$SLUG.space)
 ```
 

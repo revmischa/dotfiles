@@ -35,6 +35,10 @@ Main keeps only: head SHA, reviewer list with comment counts, snapshot path.
 Two `dispatch` setup subagents in the **same message**, one per executable:
 `daybreak` and `cyber`. Base = the PR head; name the branches
 `panel-daybreak-<n>` and `panel-cyber-<n>`. Review-only, no dev servers.
+Both start in auto-approval mode: `daybreak` with `--no-daemon --approve-for-me` (the
+dispatch skill's launch line), `cyber` with `--permission-mode auto`. A worker that stops
+to ask approval for routine commands like `cat` was launched wrong: relaunch it with those
+flags rather than handing the prompts to the user.
 
 Both briefs are identical apart from the executable. Each worker must:
 
