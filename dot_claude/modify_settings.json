@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+# chezmoi modify_ script for ~/.claude/settings.json: Claude Code writes this file itself, so chezmoi
+# only merges in the rules below and leaves everything else as it finds it.
+#
+# BreakGlass deny rules (2026-11-24): an agent on the devbox ran `aws sts get-caller-identity
+# --profile prod-breakglass` before it read the profile's "do not use" note, which raised a
+# BreakGlass alert. These rules block any Bash command naming a BreakGlass profile. They match the
+# command text only: a script that selects the profile internally is not caught.
+import json
+import sys
+
+DENY = [
+    "Bash(*--profile prod-breakglass*)",
+    "Bash(*--profile mpo-breakglass*)",
+    "Bash(*--profile=prod-breakglass*)",
+    "Bash(*--profile=mpo-breakglass*)",
+    "Bash(*AWS_PROFILE=prod-breakglass*)",
+    "Bash(*AWS_PROFILE=mpo-breakglass*)",
+]
+
+raw = sys.stdin.read()
+settings = json.loads(raw) if raw.strip() else {}
+deny = settings.setdefault("permissions", {}).setdefault("deny", [])
+for rule in DENY:
+    if rule not in deny:
+        deny.append(rule)
+sys.stdout.write(json.dumps(settings, indent=2) + "\n")
