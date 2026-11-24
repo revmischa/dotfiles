@@ -23,7 +23,7 @@ line of `ListAgents`, e.g. `api-3d`) is where Claude workers report, by cross-se
 `SendMessage`. `$HC_TERMINAL_ID` (e.g. `t2b`) is where `cyber` / `daybreak` workers
 report, by `hc send`, since they aren't Claude sessions. Never use the old `herdr` CLI.
 
-Settle with the user, if the conversation hasn't: **hand-off** ("draft PR when green +
+Settle with the user, if the conversation hasn't: **hand-off** ("PR when green +
 Copilot, then stop" or "stop before pushing and report"), **executable** (`claude`
 unless they named `cyber` or `daybreak`), **base** (`origin/main` unless it sits on a PR
 branch). Don't ask about the branch name.
@@ -37,7 +37,7 @@ Invoke the `dispatch` skill and carry out its "Setup" section, then return its r
 - Repo / main checkout: <path>
 - Base: <origin/main | <pr-branch>>
 - Scope notes from the user, verbatim: <...>
-- Hand-off: <draft PR + copilot, then stop | stop before pushing and report>
+- Hand-off: <PR + copilot, then stop | stop before pushing and report>
 - Executable: <claude | cyber | daybreak>
 - Dev servers: <none | if the repo documents them>
 - Coordinator session: <your name from ListAgents>

@@ -38,7 +38,9 @@ branch off that PR's branch. If unsure, ask. New branches must not track `origin
 
 # PRs
 
-Always open **draft** PRs. Add `copilot` as a reviewer after opening, even on drafts.
+Open PRs **ready for review**, not as drafts. Use a draft only for a concrete reason
+(deliberately unfinished work, a stacked PR waiting on its base, or I asked) and say why
+in the description. Add `copilot` as a reviewer after opening, drafts included.
 
 Avoid running full test suites locally; they wreck my CPU. Run the checks scoped to what
 you changed and let CI do the rest unless it's urgent.

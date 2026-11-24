@@ -9,7 +9,7 @@ description: Use when the user wants to go through their open PRs to see which a
 
 Drive a backlog of the user's open PRs to merge, one by one. The core loop: **identify the right repo → pull true status → triage into buckets → process each → checkpoint before any outward action.**
 
-The user's global `CLAUDE.md` already sets standing conventions (draft PRs by default, **never merge without explicit OK**, squash merges, mark addressed review threads RESOLVED, read ALL comments before acting). This skill is the *procedure*; those conventions still bind.
+The user's global `CLAUDE.md` already sets standing conventions (PRs open ready for review, drafts only for a stated reason, **never merge without explicit OK**, squash merges, mark addressed review threads RESOLVED, read ALL comments before acting). This skill is the *procedure*; those conventions still bind.
 
 ## Step 0: Identify the canonical repo FIRST
 

@@ -8,7 +8,8 @@ Push my changes.
 
 # If there is not an open PR:
 
-Create a draft pull request. Follow this workflow:
+Create a pull request, ready for review (a draft only for a concrete reason, stated in
+the description). Follow this workflow:
 
 ## 1. Review Current State
 
@@ -34,7 +35,7 @@ Check the current state:
 
 If there isn't already an open PR:
 
-Use `gh pr create --draft` with:
+Use `gh pr create` with:
 
 - Appropriate title
 - Description including:
